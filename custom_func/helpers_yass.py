@@ -143,9 +143,35 @@ def log_reg_gradient(y, tx, w):
     """
     return ( tx.T @ ( sigmoid( tx @ w ) - y ) ) / len(y)
 
+def reg_term(lambda_,w):
+    """Calculates the regularization term needed for penalization
+
+    Args:
+        lambda_:scalar
+        w: weights of shape(D,)
+
+    Returns:
+        regularization term
+    """
+    return 2*lambda_*w
+
+
+def reg_log_reg_gradient(y, tx, w, lambda_):
+    """compute the gradient of loss.
+
+    Args:
+        y:  shape=(N, 1)
+        tx: shape=(N, D)
+        w:  shape=(D, 1)
+
+    Returns:
+        a vector of shape (D, 1)
+    """
+    return ( tx.T @ ( sigmoid( tx @ w ) - y ) ) / len(y) + reg_term(lambda_,w)
+
 def least_squares(y, tx):
     """Calculate the least squares solution.
-       returns mse, and optimal weights.
+       returns optimal weights.
 
     Args:
         y: numpy array of shape (N,), N is the number of samples.
@@ -153,7 +179,6 @@ def least_squares(y, tx):
 
     Returns:
         w: optimal weights, numpy array of shape(D,), D is the number of features.
-        mse: scalar.
 
     """
     w = np.linalg.solve((tx.T @ tx) ,( tx.T @ y))
@@ -232,16 +257,5 @@ def stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma,g
         
     return ws
 
-def reg_term(lambda_,w):
-    """Calculates the regularization term needed for penalization
-
-    Args:
-        lambda_:scalar
-        w: weights of shape(D,)
-
-    Returns:
-        regularization term
-    """
-    return 2*lambda_*w
 
 
