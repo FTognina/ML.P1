@@ -107,4 +107,5 @@ ENV/
 *.synctex.gz
 
 #data
+dataset/
 data/*
