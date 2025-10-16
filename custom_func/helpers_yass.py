@@ -47,25 +47,10 @@ def mse(y, tx, w):
         mse: scalar corresponding to the mse 
 
     """
-    f = tx @ (w)
+    f = tx @ w
     l = (y-f)**2
-    return np.mean(l)
+    return np.mean(l)/2
    
-    
-def mae(y,tx,w):
-    """compute the loss by mae.
-    Args:
-        y: numpy array of shape (N,), N is the number of samples.
-        tx: numpy array of shape (N,D), D is the number of features.
-        w: weights, numpy array of shape(D,), D is the number of features.
-
-    Returns:
-        mae: scalar corresponding to the mae 
-
-    """
-    f = tx @ (w)
-    l = np.abs(y-f)
-    return np.mean(l)
     
 
 def rmse(y, tx, w):
@@ -215,16 +200,16 @@ def gradient_descent(y, tx, initial_w, max_iters, gamma, grad_func):
         ws: a list of length max_iters + 1 containing the model parameters as numpy arrays of shape (2, ),
             for each iteration of GD (as well as the final weights)
     """
-    ws = [initial_w]
+    
     w = initial_w
 
     for n_iter in range(max_iters):
             
         grad = grad_func(y,tx,w)    
         w = w + gamma*grad
-        ws.append(w)
         
-    return ws
+        
+    return w
 
 
 def stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma,grad_func):
@@ -243,7 +228,6 @@ def stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma,g
         ws: a list of length max_iters containing the model parameters as numpy arrays of shape (2, ), for each iteration of SGD
     """
 
-    ws = [initial_w]
     w = initial_w
 
     for _ in range(max_iters):
@@ -253,9 +237,9 @@ def stochastic_gradient_descent(y, tx, initial_w, batch_size, max_iters, gamma,g
             y1,tx1 = i
             grad = grad_func(y1,tx1,w)
             w = w+ gamma*grad
-            ws.append(w)
+            
         
-    return ws
+    return w
 
 
 

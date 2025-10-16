@@ -1,5 +1,5 @@
 import numpy as np
-from custom_func import helpers_yass as hp
+import helpers_yass as hp
 from functools import partial
 
 def  mean_squared_error_gd(y,tx,initial_w, max_iters,gamma):
@@ -18,7 +18,7 @@ def  mean_squared_error_gd(y,tx,initial_w, max_iters,gamma):
 
     w_star = hp.gradient_descent(y ,tx ,initial_w ,max_iters ,gamma ,hp.lin_reg_gradient )
     loss = hp.mse(y ,tx ,w_star )
-    return loss,w_star
+    return w_star,loss
 
 def mean_squared_error_sgd(y,tx,initial_w, max_iters,gamma):
     """Linear regression using stochastic gradient descent
@@ -34,9 +34,9 @@ def mean_squared_error_sgd(y,tx,initial_w, max_iters,gamma):
         w_star: numpy array of shape (D, ), the optimal model parameters
     """
 
-    w_star = hp.stochastic_gradient_descent(y ,tx ,initial_w ,max_iters ,gamma ,hp.lin_reg_gradient )
+    w_star = hp.stochastic_gradient_descent(y ,tx ,initial_w ,1,max_iters ,gamma ,hp.lin_reg_gradient )
     loss = hp.mse(y ,tx ,w_star )
-    return loss,w_star
+    return w_star, loss
 
 def least_squares(y,tx):
     """Least squares regression using normal equations
@@ -52,7 +52,7 @@ def least_squares(y,tx):
     w = hp.least_squares(y,tx)
     loss = hp.mse(y,tx,w) 
 
-    return loss,w
+    return w,loss
 
 def ridge_regression(y, tx, lambda_):
     """Ridge regression using normal equations
@@ -70,7 +70,7 @@ def ridge_regression(y, tx, lambda_):
     w = hp.ridge_regression(y,tx,lambda_)
     loss = hp.mse(y,tx,w) 
 
-    return loss,w
+    return w,loss
     
 def logistic_regression(y ,tx ,initial_w ,max_iters ,gamma ):
     """Logistic regression using gradient descent
@@ -87,7 +87,7 @@ def logistic_regression(y ,tx ,initial_w ,max_iters ,gamma ):
     """
     w_star = hp.gradient_descent(y ,tx ,initial_w ,max_iters ,gamma ,hp.log_reg_gradient )
     loss = hp.neg_log_likelihood(y ,tx ,w_star )
-    return loss,w_star
+    return w_star,loss
 
 def reg_logistic_regression(y ,tx ,lambda_ ,initial_w ,max_iters ,gamma ):
     """Logistic regression using gradient descent
@@ -106,4 +106,4 @@ def reg_logistic_regression(y ,tx ,lambda_ ,initial_w ,max_iters ,gamma ):
     grad_func = partial(hp.reg_log_reg_gradient, lambda_=lambda_)
     w_star = hp.gradient_descent(y ,tx ,initial_w ,max_iters ,gamma , grad_func)
     loss = hp.neg_log_likelihood(y ,tx ,w_star )
-    return loss,w_star
+    return w_star,loss
