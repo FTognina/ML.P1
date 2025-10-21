@@ -107,6 +107,8 @@ def load_data_col(path, cols=(0), has_header=True):
     path: path to CSV file
     cols: list of column indices to load (default: 0)
     has_header: whether the CSV file has a header row (default: True)
+
+    returns data with nan for missing values
     """
     skip = 1 if has_header else 0
     data = np.genfromtxt(
@@ -114,8 +116,8 @@ def load_data_col(path, cols=(0), has_header=True):
         delimiter=",",
         skip_header=1 if has_header else 0,
         usecols=(cols),  # adjust based on relevant columns]       # force float to accommodate np.nan
-        missing_values=0,       # treat empty strings as missing
-        filling_values=0,   # replace missing with np.nan
+        missing_values=["", "NA", "NaN"],       # treat empty strings as missing missing_values=["", "NA", "NaN"]
+        filling_values=np.nan,
         autostrip=True,
         invalid_raise=False
     )
@@ -148,15 +150,32 @@ def expand_column(col, col_name):
     Each column in the output array is a binary indicator (0 or 1) of whether the corresponding
     entry in col matches the unique value for that column.
     col: 1D numpy array of categorical values
+
+    #Missing values are handled by adding an additional binary indicator column and set to 0.
     '''
+    is_missing = np.isnan(col).astype(np.int8)
+    has_missing = np.any(is_missing)
+
+    col = np.where(is_missing, 0, col)
+
     unique_values = np.unique(col)
-    if unique_values.size > 10:
+
+    if unique_values.size > 10 and not has_missing:
         return None, None
-    #print(f"Unique values in column '{col_name}': {unique_values}")
-    expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
-    for i, val in enumerate(unique_values):
-        expanded[:, i] = (col == val).astype(int)
-    col_names = [f"{col_name}_{val}" for val in unique_values]
+    elif unique_values.size > 10 and has_missing:
+        expanded = np.column_stack([col, is_missing])
+        col_names = [f"{col_name}_is_missing"]
+    else:
+        #print(f"Unique values in column '{col_name}': {unique_values}")
+        expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
+        for i, val in enumerate(unique_values):
+            expanded[:, i] = (col == val).astype(int)
+        col_names = [f"{col_name}_{val}" for val in unique_values]
+
+        if has_missing:
+            expanded = np.column_stack([expanded, is_missing])
+            col_names.append(f"{col_name}_is_missing")
+
     return expanded, col_names
 
 def match_col_names(partial_names, header):
