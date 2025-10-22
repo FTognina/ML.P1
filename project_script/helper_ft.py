@@ -144,39 +144,78 @@ def get_col_index(cols, header):
     return [name for name in cols if name in header], [header.index(name) for name in cols if name in header]
 
 
+# def expand_column(col, col_name):
+#     '''
+#     Expand a 1D column vector into a N array where N is the number of unique values in col.
+#     Each column in the output array is a binary indicator (0 or 1) of whether the corresponding
+#     entry in col matches the unique value for that column.
+#     col: 1D numpy array of categorical values
+
+#     #Missing values are handled by adding an additional binary indicator column and set to 0.
+#     '''
+#     is_missing = np.isnan(col).astype(np.int8)
+#     has_missing = np.any(is_missing)
+
+#     col = np.where(is_missing, 0, col)
+
+#     unique_values = np.unique(col)
+
+#     if unique_values.size > 10 and not has_missing:
+#         return None, None
+#     elif unique_values.size > 10 and has_missing:
+#         expanded = np.column_stack([col, is_missing])
+#         col_names = [f"{col_name}_is_missing"]
+#     else:
+#         #print(f"Unique values in column '{col_name}': {unique_values}")
+#         expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
+#         for i, val in enumerate(unique_values):
+#             expanded[:, i] = (col == val).astype(int)
+#         col_names = [f"{col_name}_{val}" for val in unique_values]
+
+#         if has_missing:
+#             expanded = np.column_stack([expanded, is_missing])
+#             col_names.append(f"{col_name}_is_missing")
+
+#     return expanded, col_names
+
+
 def expand_column(col, col_name):
-    '''
-    Expand a 1D column vector into a N array where N is the number of unique values in col.
-    Each column in the output array is a binary indicator (0 or 1) of whether the corresponding
-    entry in col matches the unique value for that column.
-    col: 1D numpy array of categorical values
-
-    #Missing values are handled by adding an additional binary indicator column and set to 0.
-    '''
-    is_missing = np.isnan(col).astype(np.int8)
-    has_missing = np.any(is_missing)
-
-    col = np.where(is_missing, 0, col)
-
-    unique_values = np.unique(col)
-
-    if unique_values.size > 10 and not has_missing:
-        return None, None
-    elif unique_values.size > 10 and has_missing:
-        expanded = np.column_stack([col, is_missing])
-        col_names = [f"{col_name}_is_missing"]
+    """
+    Expand one column into features:
+      - If unique values <= 10: one-hot + <name>_is_missing
+      - Else: keep numeric column (NaNs->0) + <name>_is_missing
+    Returns: (N, K) array and list[str] of length K.
+    """
+    col = np.asarray(col)
+    # detect missing robustly
+    if np.issubdtype(col.dtype, np.floating):
+        is_missing = np.isnan(col)
     else:
-        #print(f"Unique values in column '{col_name}': {unique_values}")
-        expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
+        # fall back: treat empty strings as missing if dtype=object
+        is_missing = (col == "") | (col == None)
+
+    has_missing = np.any(is_missing)
+    col_filled = np.where(is_missing, 0, col)
+
+    unique_values = np.unique(col_filled)
+
+    # one-hot branch (small cardinality)
+    if unique_values.size <= 10:
+        expanded = np.zeros((col_filled.size, unique_values.size), dtype=np.int16)
         for i, val in enumerate(unique_values):
-            expanded[:, i] = (col == val).astype(int)
+            expanded[:, i] = (col_filled == val).astype(np.int16)
         col_names = [f"{col_name}_{val}" for val in unique_values]
 
+        # append is_missing flag
         if has_missing:
-            expanded = np.column_stack([expanded, is_missing])
+            expanded = np.column_stack([expanded, is_missing.astype(np.int8)])
             col_names.append(f"{col_name}_is_missing")
+        return expanded, col_names
 
-    return expanded, col_names
+    # high-cardinality: keep numeric column + is_missing
+    out = np.column_stack([col_filled.astype(float), is_missing.astype(np.int8)])
+    names = [col_name, f"{col_name}_is_missing"]
+    return out, names
 
 def match_col_names(partial_names, header):
     """
@@ -250,6 +289,9 @@ def build_k_indices(y, k_fold, seed):
     >>> build_k_indices(np.array([1., 2., 3., 4.]), 2, 1)
     array([[3, 2],
            [0, 1]])
+           
+    Class distribution 1:10
+    No need to stratify because of law of large numbers. 
     """
     num_row = y.shape[0]
     interval = int(num_row / k_fold)
