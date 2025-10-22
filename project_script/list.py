@@ -191,3 +191,98 @@ col_list_2 = [
     '_PNEUMO2_', #Adults aged 65+ who have ever had a pneumonia vaccination 283k nan
     '_AIDTST3_' #Adults who have ever been tested for HIV 43k nan
     ]
+
+col_list_3 = [
+'_RFHLTH', #Adults with good or better health
+'_HCVU651', #Respondents aged 18-64 who have any form of health care coverage
+'_RFHYPE5', #Adults who have been told they have high blood pressure by a doctor, nurse, or other health professional
+'_CHOLCHK', #Cholesterol check within past five years
+'_RFCHOL', #adults who have had their cholesterol checked and have been told by a doctor, nurse, or other health professional that it was high 59k nan
+# what we train on '_MICHD', #Respondents that have ever reported having coronary heart disease (CHD) or myocardial infarction (MI) 3k nan
+#'_LTASTH1', #Adults who have ever been told they have asthma
+#'_CASTHM1', #Adults who have been told they currently have asthma
+'_ASTHMS1', #Computed asthma status
+'_DRDXAR1', #Respondents who have had a doctor diagnose them as having some form of arthritis
+# '_PRACE1', #Preferred race category
+# '_MRACE1', #Calculated multiracial race categorization
+'_HISPANC', #Hispanic, Latino/a, or Spanish origin calculated variable
+'_RACE', #Race/ethnicity categories
+# '_RACEG21', #White non-Hispanic race group
+# '_RACEGR3', #Five-level race/ethnicity category
+# '_RACE_G1', #Race groups used for internet prevalence tables 7k nan
+# '_AGEG5YR', #Fourteen-level age category
+'_AGE65YR', #Two-level age category
+# '_AGE80', #Imputed Age value collapsed above 80
+'_AGE_G', #Six-level imputed age category
+# '_HTIN4', #Reported height in inches #17k nan
+'_HTM4', #Reported height in meters 15k nan
+'_WTKG3', #Reported weight in kilograms
+# '_BMI5', #Body Mass Index (BMI) 36k nan
+'_BMI5CAT', #Four-categories of Body Mass Index (BMI) 36k nan
+# '_RFBMI5', #Adults who have a body mass index greater than 25.00 (Overweight or Obese) 36k nan
+'_CHLDCNT', #Number of children in household
+'_EDUCAG', #Level of education completed
+'_INCOMG', #Income categories
+'_SMOKER3', #Four-level smoker status: Everyday smoker, Someday smoker, Former smoker, Non-smoker
+'_RFSMOK3', #Adults who are current smokers
+'_DRNKANY5', #Adults who reported having had at least one drink of alcohol in the past 30 days.
+# 'DROCDY3', #Drink-occasions-per-day
+'_RFBING5', #Binge drinkers (males having five or more drinks on one occasion, females having four or more drinks on one occasion)
+# '_DRNKWEK', #Calculated total number of alcoholic beverages consumed per week
+'_RFDRHV5', #Heavy drinkers (adult men having more than 14 drinks per week and adult women having more than 7 drinks per
+'FTJUDA1', #Fruit juice intake in times per day 38k nan
+'FRUTDA1', #Fruit intake in times per day 36k nan
+'BEANDAY', #Bean intake in times per day 39k nan
+'GRENDAY', #Dark green vegetable intake in times per day 38k nan
+'ORNGDAY', #Orange-colored vegetable intake in times per day 39k nan
+'VEGEDA1', #Other vegetable intake in times per day 41k nan
+'_MISFRTN', #The number of missing fruit responses
+'_MISVEGN', #The number of missing vegetable responses
+'_FRTRESP', #Missing any fruit responses
+'_VEGRESP', #Missing any vegetable responses
+'_FRUTSUM', #Total fruits consumed per day 43k nan
+'_VEGESUM', #Total vegetables consumed per day 51k nan
+'_FRTLT1', #Consume Fruit 1 or more times per day
+'_VEGLT1', #Consume Vegetables 1 or more times per day
+'_FRT16', #Reported consuming Fruit >16 per day
+'_VEG23', #Reported consuming Vegetables >23 per day
+'_FRUITEX', #Fruit Exclusion from analyses
+'_VEGETEX', #Vegetable Exclusion from analyses
+'_TOTINDA', #Adults who reported doing physical activity or exercise during the past 30 days other than their regular job
+'METVL11', #Activity MET Value for First Activity 146k nan
+'METVL21', #Activity MET Value for Second Activity 151k nan
+'MAXVO2', #Estimated Age-Gender Specific Maximum Oxygen Consumption
+'FC60', #Estimated Functional Capacity
+'ACTIN11', #Estimated Activity Intensity for First Activity 150k nan
+'ACTIN21', #Estimated Activity Intensity for Second Activity 154k nan
+'PADUR1', #Estimated Duration in Minutes for First Activity 154k nan
+'PADUR2', #Minutes of Second Activity 249k nan
+'PAFREQ1', #Physical Activity Frequency per Week for First Activity 150k nan
+'PAFREQ2', #Physical Activity Frequency per Week for Second Activity 246k nan
+'MINAC11', #Minutes of Physical Activity per week for First Activity 155k nan
+'MINAC21', #Minutes of Physical Activity per week for Second Activity 157k nan
+'STRFREQ', #Strength Activity Frequency per Week 44k nan
+'PAMISS1', #Missing Physical Activity Data
+'PAMIN11', #Minutes of Physical Activity per week for First Activity 158k nan
+'PAMIN21', #Minutes of Physical Activity per week for Second Activity 160k nan
+'PA1MIN', #Minutes of total Physical Activity per week 152k nan
+'PAVIG11', #Minutes of Vigorous Physical Activity per week for First Activity 153k nan
+'PAVIG21', #Minutes of Vigorous Physical Activity per week for Second Activity 158k nan
+'PA1VIGM', #Minutes of total Vigorous Physical Activity per week 150k nan
+'PACAT1', #Physical Activity Categories
+'PAINDX1', #Physical Activity Index
+# 'PA150R2', #Adults that participated in 150 minutes (or vigorous equivalent minutes) of physical activity per week.
+# 'PA300R2', #Adults that participated in 300 minutes (or vigorous equivalent minutes) of physical activity per week.
+# 'PA30021', #Adults that participated in 300 minutes (or vigorous equivalent minutes) of physical activity per week (2-levels).
+'PASTRNG', #Muscle Strengthening Recommendation
+'PAREC1', #Aerobic and Strengthening Guideline
+'PASTAE1', #Aerobic and Strengthening (2-level)
+'LMTACT1', #Limited usual activities 3k nan
+'LMTWRK1', #Limited work activities 3k nan
+'LMTSCL1', #Limited social activities 3k nan
+'RFSEAT2', #Always or Nearly Always Wear Seat Belts Calculated Variable
+'RFSEAT3', #Always Wear Seat Belts Calculated Variable
+'FLSHOT6', #Adults aged 65+ who have had a flu shot within the past year, 283k nan
+'PNEUMO2', #Adults aged 65+ who have ever had a pneumonia vaccination 283k nan
+'AIDTST3' #Adults who have ever been tested for HIV 43k nan
+]
