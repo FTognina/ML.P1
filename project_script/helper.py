@@ -43,7 +43,7 @@ def get_col_index(cols, header):
             print(f"Column '{name}' not found in the provided list.")
     return [name for name in cols if name in header], [header.index(name) for name in cols if name in header]
 
-def expand_column(col, col_name):
+def expand_column(col, col_name, with_missing=True):
     '''
     Expand a 1D column vector into a N array where N is the number of unique values in col.
     Each column in the output array is a binary indicator (0 or 1) of whether the corresponding
@@ -52,33 +52,47 @@ def expand_column(col, col_name):
 
     #Missing values are handled by adding an additional binary indicator column and set to 0.
     '''
+
     is_missing = np.isnan(col).astype(np.int8)
     has_missing = np.any(is_missing)
     unique_values = np.unique(col)[~np.isnan(np.unique(col))]
 
+    if with_missing:
+        if unique_values.size > 10:
+            if not has_missing:
+                #normalize col 
+                col = (col - col.mean()) / col.std()
+                return col.reshape(-1, 1), [col_name]
+            col = np.where(np.isnan(col), np.nanmean(col), col)
+            #normalize col 
+            col = (col - col.mean()) / col.std()
+            expanded = np.column_stack([col, is_missing])
+            col_names = np.append([col_name], [f"{col_name}_is_missing"])
+        else:
+            #print(f"Unique values in column '{col_name}': {unique_values}")
+            expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
+            for i, val in enumerate(unique_values):
+                expanded[:, i] = (col == val).astype(int)
+            col_names = [f"{col_name}_{val}" for val in unique_values]
 
-    if unique_values.size > 10:
-        if not has_missing:
+            if has_missing:
+                expanded = np.column_stack([expanded, is_missing])
+                col_names.append(f"{col_name}_is_missing")
+
+        return expanded, col_names
+    else:
+        col = np.where(np.isnan(col), np.nanmean(col), col)
+        if unique_values.size > 10:
             #normalize col 
             col = (col - col.mean()) / col.std()
             return col.reshape(-1, 1), [col_name]
-        col = np.where(np.isnan(col), np.nanmean(col), col)
-        #normalize col 
-        col = (col - col.mean()) / col.std()
-        expanded = np.column_stack([col, is_missing])
-        col_names = np.append([col_name], [f"{col_name}_is_missing"])
-    else:
-        #print(f"Unique values in column '{col_name}': {unique_values}")
-        expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
-        for i, val in enumerate(unique_values):
-            expanded[:, i] = (col == val).astype(int)
-        col_names = [f"{col_name}_{val}" for val in unique_values]
+        else:
+            expanded = np.zeros((col.size, unique_values.size), dtype=np.int16)
+            for i, val in enumerate(unique_values):
+                expanded[:, i] = (col == val).astype(int)
+            col_names = [f"{col_name}_{val}" for val in unique_values]
+        return expanded, col_names
 
-        if has_missing:
-            expanded = np.column_stack([expanded, is_missing])
-            col_names.append(f"{col_name}_is_missing")
-
-    return expanded, col_names
 def match_col_names(partial_names, header):
     """
     Match partial column names with full column names from the header.
@@ -100,7 +114,7 @@ def match_col_names(partial_names, header):
                 break
     return matched_names
 
-def expand_dataset_col(col_list, path):
+def expand_dataset_col(col_list, path, with_missing=True):
     '''
     Expand a dataset by selecting specific columns and expanding categorical columns into binary indicators.
     col_list: list of column names to select and expand
@@ -129,7 +143,7 @@ def expand_dataset_col(col_list, path):
     expanded_cols = []
     expanded_col_names = []
     for i, col_name in enumerate(col_list):
-        expanded_col, col_names = expand_column(x_train_subset[:, i], col_name)
+        expanded_col, col_names = expand_column(x_train_subset[:, i], col_name, with_missing=with_missing)
         if expanded_col is None:
             print(f"Skipping column '{col_name}' due to too many unique values.")
             continue
