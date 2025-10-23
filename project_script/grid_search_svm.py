@@ -1,5 +1,20 @@
 import sklearn
 from sklearn import svm
+from sklearn.model_selection import train_test_split
+import numpy as np
+from helper import *#import helper functions
+import list as lt
+
+header = load_header('../data/dataset/x_test.csv')
+
+col_list = lt.col_list  # Example: take first 10 columns to expand
+
+x_train_expanded, expanded_col_names = expand_dataset_col(col_list, '../data/dataset/x_train.csv', False)
+x_train_full = x_train_expanded#load_data_column('x_train_expanded.csv', column_list=None)
+y_train_full = load_data_col('../data/dataset/y_train.csv', cols=(1))
+
+x_train, x_test, y_train, y_test = train_test_split(x_train_full, y_train_full, test_size=0.2, random_state=1)
+
 clf = svm.SVC()
 clf.fit(x_train, y_train)
 y_pred = clf.predict(x_test)
