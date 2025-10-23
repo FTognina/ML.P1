@@ -776,7 +776,7 @@ class LogisticRegression_costum:
         y_pred = self.predict(X, threshold)
         print(classification_report(y, y_pred, digits=digits))
     
-    def roc_curve(self, X, y):
+    def roc_curve(self, X, y, plot=False):
         '''
         Plot ROC curve, implemented using only NumPy and Matplotlib.
         shows the best f1 score on the curve
@@ -815,18 +815,19 @@ class LogisticRegression_costum:
         best_thresh = thresholds[best_f1_idx]
         best_fpr = fpr[best_f1_idx]
         best_tpr = tpr[best_f1_idx]
-    
-        plt.figure(figsize=(8, 6))
-        plt.plot(fpr, tpr, label="ROC Curve")
-        plt.plot(best_fpr, best_tpr, 'ro', markersize=10, 
-                 label=f'Best F1={best_f1:.3f} (thresh={best_thresh:.2f})')
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("Receiver Operating Characteristic")
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        plt.show()
         
+        if plot:
+            plt.figure(figsize=(8, 6))
+            plt.plot(fpr, tpr, label="ROC Curve")
+            plt.plot(best_fpr, best_tpr, 'ro', markersize=10, 
+                    label=f'Best F1={best_f1:.3f} (thresh={best_thresh:.2f})')
+            plt.xlabel("False Positive Rate")
+            plt.ylabel("True Positive Rate")
+            plt.title("Receiver Operating Characteristic")
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            plt.show()
+            
         print(f"Best F1 Score: {best_f1:.4f} at threshold {best_thresh:.2f}")
         print(f"TPR: {best_tpr:.4f}, FPR: {best_fpr:.4f}")
         return best_f1, best_thresh
