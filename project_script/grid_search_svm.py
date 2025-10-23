@@ -15,7 +15,7 @@ y_train_full = load_data_col('../data/dataset/y_train.csv', cols=(1))
 
 x_train, x_test, y_train, y_test = train_test_split(x_train_full, y_train_full, test_size=0.2, random_state=1)
 
-clf = svm.SVC()
+clf = svm.SVC(max_iter=2000)
 clf.fit(x_train, y_train)
 y_pred = clf.predict(x_test)
 from sklearn.metrics import accuracy_score
@@ -31,11 +31,11 @@ print("Classification Report:\n", classification_report(y_test, y_pred))
 from sklearn.model_selection import GridSearchCV
 #lots of parameters to try
 param_grid = {
-    'C': [0.1, 1, 10],
-    'kernel': ['linear', 'rbf', 'poly'],
-    'gamma': ['scale', 'auto'],
-    'class_weight': [None, 'balanced'],
-    'degree': [2, 3, 4]
+    'C': [0.5], #[0.1, 1, 10],
+    'kernel': ['poly'],#['linear', 'rbf', 'poly'],
+    'gamma': ['auto'], #['scale', 'auto'],
+    'class_weight': [None], #[None, 'balanced'],
+    'degree': [2,3] #[2, 3, 4]
 }
 grid_search = GridSearchCV(clf, param_grid, cv=5)
 grid_search.fit(x_train, y_train)
