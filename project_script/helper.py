@@ -1,6 +1,8 @@
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
+#add a seed for np
+np.random.seed(1)
 
 def load_data_col(path, cols=(0), has_header=True):
     """Load numeric CSV with missing values -> np.nan using only numpy.
@@ -590,7 +592,8 @@ class LogisticRegression_costum:
         penalty=None,
         alpha=0.0,
         l1_ratio=0.5,
-        method="batch",
+        method="",
+        batch_size=512,
         fit_intercept=True,
         verbose=False,
         early_stopping=False,
@@ -606,6 +609,7 @@ class LogisticRegression_costum:
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.method = method
+        self.batch_size = batch_size
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.early_stopping = early_stopping
@@ -681,12 +685,12 @@ class LogisticRegression_costum:
             grad += l1_term
         return grad
 
+
     def _hessian(self, X):
         y_pred = self._sigmoid(X @ self.weights_)
-        X= X.astype(np.float16)
-        y_pred = y_pred.astype(np.float16)
-        S = np.diag((y_pred * ((1 - y_pred)).flatten()))
-        return X.T @ S @ X / X.shape[0]
+        s = y_pred * (1 - y_pred)
+        # Use broadcasting instead of np.diag
+        return (X.T * s) @ X / X.shape[0]
 
     def _plot_loss(self):
         plt.figure(figsize=(7, 5))
@@ -704,21 +708,21 @@ class LogisticRegression_costum:
             plt.show()
 
     def fit(self, X, y, X_val=None, y_val=None):
+        X = X.astype(np.float32)
+        y = y.astype(np.float32)
         X = self._add_intercept(X)
         self.weights_ = np.zeros(X.shape[1])
         self.weights_[0] = self.bias_init
         best_loss = np.inf
         no_improve_count = 0
         sample_weight = self._compute_class_weights(y)
-
+        # existing gradient-descent/Newton code below unchanged
         for i in range(self.max_iter):
             if self.method == "stochastic":
-                idxs = np.random.permutation(X.shape[0])
-                X_batch, y_batch, w_batch = np.empty((0, X.shape[1])), np.empty((0,)), np.empty((0,))
-                for idx in idxs[:100]:
-                    X_batch = np.vstack([X_batch, X[idx:idx+1]])
-                    y_batch = np.append(y_batch, y[idx:idx+1])
-                    w_batch = np.append(w_batch, sample_weight[idx:idx+1])
+                idxs = np.random.randint(0, X.shape[0], size=self.batch_size)
+                X_batch = X[idxs]
+                y_batch = y[idxs]
+                w_batch = sample_weight[idxs]
             else:
                 X_batch, y_batch, w_batch = X, y, sample_weight
 
@@ -732,7 +736,8 @@ class LogisticRegression_costum:
             else:
                 self.weights_ -= self.lr * grad
 
-            train_loss = self._loss(X, y, sample_weight)
+            #train_loss = self._loss(X, y, sample_weight)
+            train_loss = self._loss(X_batch, y_batch, w_batch)
             self.train_losses_.append(train_loss)
             val_loss = None
             if X_val is not None:
@@ -746,7 +751,9 @@ class LogisticRegression_costum:
                 print(msg)
 
             if self.early_stopping and val_loss is not None:
-                if val_loss + self.tol < best_loss:
+                if val_loss is None:
+                    pass
+                elif val_loss + self.tol < best_loss:
                     best_loss = val_loss
                     self.best_weights_ = self.weights_.copy()
                     no_improve_count = 0
