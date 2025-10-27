@@ -134,7 +134,7 @@ def expand_dataset_col(col_list, path, with_missing=True):
    
     col_list = match_col_names(col_list, header)
     col_list, col_index = get_col_index(col_list, header)
-    print("number of columns accepted"+len(col_index)+" out of "+len(col_list))
+    print("number of columns accepted" + str(len(col_index)) + " out of " + str(len(col_list)))
     #load x_train with only the columns in col_indices
     
     expanded_cols = []

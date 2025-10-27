@@ -9,7 +9,7 @@ print("OPENBLAS_NUM_THREADS =", os.environ.get("OPENBLAS_NUM_THREADS"))
 
 header = load_header('../data/dataset/x_test.csv')
 
-col_list = [col for col in header[10:] if col != '_MICHD']
+col_list = [col for col in header[10:20] if col != '_MICHD']
 x_train_expanded, expanded_col_names = expand_dataset_col(col_list, '../data/dataset/x_train.csv', False)
 
 x_train_full = x_train_expanded
