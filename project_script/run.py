@@ -9,8 +9,11 @@ print("OPENBLAS_NUM_THREADS =", os.environ.get("OPENBLAS_NUM_THREADS"))
 
 header = load_header('../data/dataset/x_test.csv')
 
-col_list = [col for col in header[10:20] if col != '_MICHD']
-x_train_expanded, expanded_col_names = expand_dataset_col(col_list, '../data/dataset/x_train.csv', False)
+col_list = [col for col in header[11:] if col != '_MICHD']
+
+x_train_expanded, expanded_col_names = check_saved_extended_dataset(col_list, '../data/dataset/x_train_expanded.csv' )
+
+
 
 x_train_full = x_train_expanded
 y_train_full = load_data_col('../data/dataset/y_train.csv', cols=(1))
@@ -29,22 +32,28 @@ model = LogisticRegression_costum(
     bias_init=0.5,
     verbose=True,
     early_stopping=True,
-    method='stochastic',
+    method='batch',
     patience=20,
-    batch_size=10000
+    batch_size=1000
 )
 print("the shape of x_train is:", x_train.shape)
 print("the shape of y_train is:", y_train.shape)
 print("the shape of x_val is:", x_val.shape)
 print("the shape of y_val is:", y_val.shape)
 
-model.fit(x_train, y_train, x_val, y_val)
-_, threshold = model.roc_curve(x_val, y_val, plot=True)
-model.evaluate(x_val, y_val, threshold=threshold)
+plot_loss = model.fit(x_train, y_train, x_val, y_val)
+_, threshold, plot_roc = model.roc_curve(x_val, y_val, plot=True)
+plot_roc.show()
+try:
+    evaluation = model.evaluate(X=x_val, y=y_val, threshold=threshold)
+    print(evaluation)
+except Exception as e:
+    print("Error during evaluation:", e)
+    evaluation = "Evaluation failed."
 
 #shows feature importance of the logistic regression model
-plot_feature_importance(model, expanded_col_names, num_features=20)
-
+plot_feature = plot_feature_importance(model, expanded_col_names, nr_features=20)
+plot_feature.show()
 #Create a csv submission file with the predictions on the test set
 
 #x_test_sub = load_data_col('../data/dataset/x_test.csv', cols=col_index)
@@ -59,3 +68,13 @@ try:
 except Exception:
     ids = np.arange(1, x_test_extended.shape[0] + 1)
 create_csv_submission(ids, y_pred, "submission.csv")
+#pack the x,y,ypred values
+values = {
+    "x_train": x_train,
+    "y_train": y_train,
+    "x_val": x_val,
+    "y_val": y_val,
+    "y_pred_probabilities": y_pred_probabilities
+}
+save_report(model, plot_loss, plot_roc, evaluation, plot_feature, values)
+
