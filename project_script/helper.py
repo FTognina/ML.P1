@@ -392,8 +392,13 @@ class LogisticRegression_costum:
             return X
         return np.hstack((np.ones((X.shape[0], 1)), X))
 
+    # def _sigmoid(self, z):
+    #     return 1 / (1 + np.exp(-z))
+    
     def _sigmoid(self, z):
+        z = np.clip(z, -500, 500)
         return 1 / (1 + np.exp(-z))
+
 
     def _compute_class_weights(self, y):
         if self.class_weight is None:
@@ -407,19 +412,41 @@ class LogisticRegression_costum:
             return np.array([self.class_weight.get(val, 1.0) for val in y])
         raise ValueError("Invalid class_weight parameter")
 
+    # def _loss(self, X, y, sample_weight=None):
+    #     m = X.shape[0]
+    #     y_pred = self._sigmoid(X @ self.weights_)
+    #     eps = 1e-15
+    #     y_pred = np.clip(y_pred, eps, 1 - eps)
+
+    #     if sample_weight is None:
+    #         sample_weight = np.ones_like(y, dtype=float)
+
+    #     loss = -np.average(
+    #         y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred),
+    #         weights=sample_weight
+    #     )
+
+    #     if self.penalty == "l2":
+    #         loss += self.alpha * np.sum(self.weights_[1:] ** 2) / (2 * m)
+    #     elif self.penalty == "l1":
+    #         loss += self.alpha * np.sum(np.abs(self.weights_[1:])) / m
+    #     elif self.penalty == "elasticnet":
+    #         l1 = self.l1_ratio * np.sum(np.abs(self.weights_[1:]))
+    #         l2 = (1 - self.l1_ratio) * np.sum(self.weights_[1:] ** 2) / 2
+    #         loss += self.alpha * (l1 + l2) / m
+    #     return loss
+
     def _loss(self, X, y, sample_weight=None):
         m = X.shape[0]
-        y_pred = self._sigmoid(X @ self.weights_)
-        eps = 1e-15
-        y_pred = np.clip(y_pred, eps, 1 - eps)
+        p = self._sigmoid(X @ self.weights_)
+        p = np.clip(p, 1e-15, 1 - 1e-15)
 
+        y01 = (y == 1).astype(np.float32)
         if sample_weight is None:
-            sample_weight = np.ones_like(y, dtype=float)
+            sample_weight = np.ones_like(y01, dtype=float)
 
-        loss = -np.average(
-            y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred),
-            weights=sample_weight
-        )
+        loss = -np.average(y01*np.log(p) + (1 - y01)*np.log(1 - p),
+                        weights=sample_weight)
 
         if self.penalty == "l2":
             loss += self.alpha * np.sum(self.weights_[1:] ** 2) / (2 * m)
@@ -433,20 +460,43 @@ class LogisticRegression_costum:
 
     def _gradient(self, X, y, sample_weight=None):
         m = X.shape[0]
-        y_pred = self._sigmoid(X @ self.weights_)
+        p = self._sigmoid(X @ self.weights_)
+        y01 = (y == 1).astype(np.float32)
+
         if sample_weight is None:
-            sample_weight = np.ones_like(y, dtype=float)
-        error = (y_pred - y) * sample_weight
-        grad = X.T @ error / np.sum(sample_weight)
+            sample_weight = np.ones_like(y01, dtype=float)
+
+        err = (p - y01) * sample_weight
+        grad = X.T @ err / np.sum(sample_weight)
 
         if self.penalty in ("l2", "elasticnet"):
-            l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) * np.r_[[0], self.weights_[1:]] / m
+            l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) \
+                    * np.r_[[0], self.weights_[1:]] / m
             grad += l2_term
         if self.penalty in ("l1", "elasticnet"):
-            l1_term = self.alpha * (self.l1_ratio if self.penalty == "elasticnet" else 1) * np.sign(self.weights_) / m
+            l1_term = self.alpha * (self.l1_ratio if self.penalty == "elasticnet" else 1) \
+                    * np.sign(self.weights_) / m
             l1_term[0] = 0
             grad += l1_term
         return grad
+
+
+    # def _gradient(self, X, y, sample_weight=None):
+    #     m = X.shape[0]
+    #     y_pred = self._sigmoid(X @ self.weights_)
+    #     if sample_weight is None:
+    #         sample_weight = np.ones_like(y, dtype=float)
+    #     error = (y_pred - y) * sample_weight
+    #     grad = X.T @ error / np.sum(sample_weight)
+
+    #     if self.penalty in ("l2", "elasticnet"):
+    #         l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) * np.r_[[0], self.weights_[1:]] / m
+    #         grad += l2_term
+    #     if self.penalty in ("l1", "elasticnet"):
+    #         l1_term = self.alpha * (self.l1_ratio if self.penalty == "elasticnet" else 1) * np.sign(self.weights_) / m
+    #         l1_term[0] = 0
+    #         grad += l1_term
+    #     return grad
 
     def _plot_loss(self):
         plt.figure(figsize=(7, 5))

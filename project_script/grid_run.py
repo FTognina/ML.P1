@@ -1,7 +1,7 @@
 from helper import *#import helper functions
 import os
 
-os.environ["OPENBLAS_NUM_THREADS"] = "8"
+os.environ["OPENBLAS_NUM_THREADS"] = "14"
 print("OPENBLAS_NUM_THREADS =", os.environ.get("OPENBLAS_NUM_THREADS"))
 
 path = './reports_grid/'
