@@ -1,7 +1,7 @@
 #import libraries
 import numpy as np
-from helper import *#import helper functions
-import list as lt
+from project_script.helper import *#import helper functions
+import project_script.list as lt
 from datetime import datetime
 from pathlib import Path
 

@@ -4,8 +4,8 @@ import csv
 from sklearn import svm
 from sklearn.model_selection import train_test_split, StratifiedKFold, ParameterGrid
 from sklearn.metrics import accuracy_score, roc_auc_score
-from helper import *      # your custom data functions
-import list as lt         # your column list file
+from project_script.helper import *      # your custom data functions
+import project_script.list as lt         # your column list file
 
 # === Load data ===
 header = load_header('../data/dataset/x_test.csv')
