@@ -32,9 +32,7 @@ def run(class_weight,penalty, with_missing, nr_run):
         bias_init=0.5,
         verbose=True,
         early_stopping=True,
-        method='batch',
-        patience=20,
-        batch_size=1000
+        patience=60,
     )
     print("x_train shape:", x_train.shape," y_train shape:", y_train.shape)
     print("x_val shape:", x_val.shape," y_val shape:", y_val.shape)
