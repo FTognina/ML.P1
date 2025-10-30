@@ -1,0 +1,137 @@
+\documentclass[twocolumn]{article}
+
+% ------------------------------------------------------
+% Packages
+\usepackage{amsmath, amssymb, bm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+% ------------------------------------------------------
+\title{\textbf{Predicting Cardiovascular Disease Using Machine Learning}}
+\author{Yassine Zaki \and Rokas Bertasius \and Filippo Tognina}
+\date{October 2025}
+
+% ------------------------------------------------------
+\begin{document}
+\maketitle
+
+% ------------------------------------------------------
+\section*{Abstract}
+\noindent
+Cardiovascular diseases (CVDs) remain among the leading causes of death worldwide, highlighting the urgent need for early detection and preventive strategies. This study leverages machine learning, specifically logistic regression, to predict the likelihood of an individual developing Myocardial Infarction or Coronary Heart Disease (MICHD) using data from the Behavioral Risk Factor Surveillance System (BRFSS). After extensive data cleaning, feature engineering, and class balancing, the model was trained using stochastic gradient descent with L2 regularization and evaluated using ROC-based metrics. The proposed model demonstrates promising predictive accuracy, emphasizing the potential of interpretable statistical learning approaches in large-scale population health monitoring.
+
+%-------------------------------------------------------
+\section{Introduction}
+\noindent
+Cardiovascular diseases (CVDs) continue to represent one of the most critical challenges in global public health, accounting for a significant proportion of preventable deaths each year. Among these, Myocardial Infarction and Coronary Heart Disease (MICHD) are particularly prevalent and often fatal if not detected early. Traditional diagnostic methods based on medical imaging, laboratory testing, and clinical evaluation are effective yet resource-intensive and reactive rather than preventative.
+
+The growing availability of large-scale health datasets, such as the Behavioral Risk Factor Surveillance System (BRFSS), offers an opportunity to develop data-driven predictive tools capable of identifying individuals at high risk before the onset of severe disease. However, these datasets present challenges related to heterogeneity, missing values, and class imbalance.
+
+In this work, we present a machine-learning framework based on \textbf{logistic regression} to predict the likelihood of MICHD occurrence. Our approach integrates robust data preprocessing, feature weighting, and class rebalancing techniques to improve model interpretability and generalization. The main contributions of this study are as follows:
+\begin{itemize}
+    \item We preprocess and engineer features from the BRFSS dataset to create a clean and structured input space for predictive modeling.
+    \item We implement a regularized logistic regression model with L2 penalty and class weighting to mitigate overfitting and handle data imbalance.
+    \item We evaluate the model using Receiver Operating Characteristic (ROC) analysis and discuss its interpretability in the context of public health decision-making.
+\end{itemize}
+
+
+% ------------------------------------------------------
+\section{Model and Methods}
+
+\subsection{Model Overview}
+The primary predictive model employed in this study is \textbf{Logistic Regression}, a classical yet powerful approach for binary classification tasks. In this context, the model estimates the probability that an individual develops MICHD given an input feature vector $\bm{x}$:
+
+\begin{equation}
+P(y = 1 \mid \bm{x}) = \frac{1}{1 + e^{-(\bm{w}^\top \bm{x} + b)}}
+\end{equation}
+
+Here, $\bm{w}$ denotes the learned weight vector, $\bm{x}$ the input feature vector, and $b$ the bias term.
+
+Model parameters were optimized using \textbf{mini-batch Stochastic Gradient Descent (SGD)} with 1000 iterations, a learning rate of 0.1, and a batch size of 10,000. This batch size was selected to mitigate class imbalance effects that may arise with smaller subsets. The optimization minimizes the \textbf{negative log-likelihood loss}, which quantifies the difference between predicted and true labels.
+
+% ------------------------------------------------------
+\subsection{Regularization and Overfitting Prevention}
+To prevent overfitting and improve generalization, \textbf{L2 regularization} was applied with a regularization coefficient $\alpha = 0.1$. This term penalizes large weight magnitudes, thereby reducing model variance and improving stability on unseen data. The complete loss function is expressed as:
+
+\begin{equation}
+\mathcal{L}(\bm{w}) = -\frac{1}{N} \sum_{i=1}^{N} 
+\left[ y_i \log(\hat{y}_i) + (1 - y_i) \log(1 - \hat{y}_i) \right]
++ \alpha \lVert \bm{w} \rVert_2^2
+\end{equation}
+
+where $\hat{y}_i$ denotes the predicted probability for sample $i$.
+
+% ------------------------------------------------------
+\subsection{Data Splitting and Validation}
+The dataset was randomly partitioned into a \textbf{training set (80\%)} and a \textbf{test set (20\%)}, ensuring independent evaluation. This hold-out validation approach prevents information leakage and provides an unbiased estimate of the model’s performance on unseen data.
+
+% ------------------------------------------------------
+\subsection{Data Preprocessing and Cleaning}
+The original BRFSS dataset comprises a heterogeneous mix of binary, categorical, and numerical attributes. To render the data suitable for logistic regression:
+\begin{itemize}
+    \item Categorical variables were transformed using \textbf{one-hot encoding}, preventing artificial ordinal relationships.
+    \item Missing values were addressed via the creation of \textbf{indicator features} marking missing entries—an approach inspired by augmented data modeling that allows the classifier to treat “missingness” as informative.
+    \item To counter the strong class imbalance (low MICHD prevalence), \textbf{class weights} were introduced during training. Misclassification of positive samples incurred a higher penalty (negative class weight = 1.0; positive class weight = 30.0), reducing bias toward the majority class.
+\end{itemize}
+
+% ------------------------------------------------------
+\subsection{Optimization, Early Stopping, and Hyperparameter Tuning}
+Training employed \textbf{early stopping}, a regularization method halting optimization when the validation loss ceases to improve. A patience value of 20 epochs was chosen, permitting minor fluctuations before convergence.
+
+A \textbf{grid search} was conducted to tune hyperparameters such as learning rate, regularization strength, class weighting, and classification thresholds. The optimal decision threshold was selected using the \textbf{Receiver Operating Characteristic (ROC)} curve, balancing sensitivity and specificity.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{roc_curve.png}
+    \caption{ROC Curve}
+    \label{fig:placeholder}
+\end{figure}
+
+
+This ROC curve, fig.1, illustrates the trade-off between the True Positive Rate (TPR) and the False Positive Rate (FPR) for different decision thresholds of our classifier. The curve shows how well the model distinguishes between positive and negative classes. The red point marks the threshold (0.77) that yielded the best F1-score (0.394), representing the optimal balance between precision and recall. A higher area under the curve (AUC) indicates better overall classification performance.
+
+% ------------------------------------------------------
+\subsection{Dataset Description}
+The dataset originates from the \textbf{Behavioral Risk Factor Surveillance System (BRFSS)}, a large-scale survey capturing self-reported health data across multiple domains:
+\textit{\textbf{Health Status, Healthcare Access, Hypertension Awareness, Cholesterol Awareness, Chronic Conditions, Demographics, Tobacco Use, Alcohol Consumption, Nutrition, Physical Activity, Arthritis Burden, Seatbelt Use, Immunization, and HIV/AIDS.}}
+
+Data cleaning involved removing duplicates, dropping administrative variables (e.g., phone numbers, timestamps), and resolving inconsistencies. While a broad feature set was preserved to avoid premature bias, we introduced a feature-weighting heuristic—assigning \textbf{higher weights} to clinically significant variables and \textbf{lower weights} to less informative ones. This weighting was incorporated into the loss function to guide optimization toward more meaningful predictors.
+
+% ------------------------------------------------------
+\section{Results}
+
+This bar, Fig.2, chart presents the relative importance of the features used in our predictive model. Features with higher importance values have a stronger influence on the model’s predictions. Age-related variables such as \textbf{AGE80} and \textbf{AGEG5YR} are the most significant predictors, indicating that age plays a major role in determining the risk of cardiovascular diseases. Other influential factors include \textbf{CHILDREN, TOLDHI2} (doctor-diagnosed high blood pressure), and \textbf{RFCHOL} (cholesterol status), reflecting both demographic and health-related contributions to disease prediction.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{feature_importance.png}
+    \caption{Features}
+    \label{fig:placeholder}
+\end{figure}
+
+This plot, fig.3, shows the evolution of the training and validation losses over the training iterations. The training loss remains relatively stable, while the validation loss decreases steadily, indicating that the model continues to improve its performance on unseen data. The consistent gap between the two curves suggests that the model generalizes reasonably well, with no clear signs of overfitting. Overall, the downward trend in validation loss demonstrates that the optimization process successfully minimized the negative log-likelihood and improved predictive accuracy.
+
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{loss_plot.png}
+    \caption{Negative Log-Likelihood loss}
+    \label{fig:placeholder}
+\end{figure}
+
+
+
+
+
+% ------------------------------------------------------
+\section{Discussion}
+[To include interpretation of model coefficients, ROC analysis, and feature importance insights.]
+
+% ------------------------------------------------------
+\section{Summary}
+[Summarize the predictive performance and clinical implications.]
+
+% ------------------------------------------------------
+\end{document}
