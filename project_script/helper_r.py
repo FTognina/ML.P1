@@ -438,16 +438,26 @@ class LogisticRegression_costum:
 
     def _loss(self, X, y, sample_weight=None):
         m = X.shape[0]
+<<<<<<< HEAD
         p = self._sigmoid(X @ self.weights_)
         p = np.clip(p, 1e-15, 1 - 1e-15)
 
         y01 = (y == 1).astype(np.float32)
+=======
+        z = X @ self.weights_
+>>>>>>> c74ff701b417ba1c9582ff7e95271a99f112c76c
         if sample_weight is None:
             sample_weight = np.ones_like(y01, dtype=float)
 
+<<<<<<< HEAD
         loss = -np.average(y01*np.log(p) + (1 - y01)*np.log(1 - p),
                         weights=sample_weight)
+=======
+        # Logistic loss for labels in {-1, 1}
+        loss = np.average(np.log(1 + np.exp(-y * z)), weights=sample_weight)
+>>>>>>> c74ff701b417ba1c9582ff7e95271a99f112c76c
 
+        # Regularization terms
         if self.penalty == "l2":
             loss += self.alpha * np.sum(self.weights_[1:] ** 2) / (2 * m)
         elif self.penalty == "l1":
@@ -458,8 +468,10 @@ class LogisticRegression_costum:
             loss += self.alpha * (l1 + l2) / m
         return loss
 
+
     def _gradient(self, X, y, sample_weight=None):
         m = X.shape[0]
+<<<<<<< HEAD
         p = self._sigmoid(X @ self.weights_)
         y01 = (y == 1).astype(np.float32)
 
@@ -468,7 +480,17 @@ class LogisticRegression_costum:
 
         err = (p - y01) * sample_weight
         grad = X.T @ err / np.sum(sample_weight)
+=======
+        z = X @ self.weights_
+        if sample_weight is None:
+            sample_weight = np.ones_like(y, dtype=float)
 
+        # Error term for logistic loss with labels {-1, 1}
+        error = -y * self._sigmoid(-y * z) * sample_weight
+        grad = X.T @ error / np.sum(sample_weight)
+>>>>>>> c74ff701b417ba1c9582ff7e95271a99f112c76c
+
+        # Regularization terms
         if self.penalty in ("l2", "elasticnet"):
             l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) \
                     * np.r_[[0], self.weights_[1:]] / m
@@ -481,6 +503,7 @@ class LogisticRegression_costum:
         return grad
 
 
+<<<<<<< HEAD
     # def _gradient(self, X, y, sample_weight=None):
     #     m = X.shape[0]
     #     y_pred = self._sigmoid(X @ self.weights_)
@@ -498,6 +521,8 @@ class LogisticRegression_costum:
     #         grad += l1_term
     #     return grad
 
+=======
+>>>>>>> c74ff701b417ba1c9582ff7e95271a99f112c76c
     def _plot_loss(self):
         plt.figure(figsize=(7, 5))
         plt.plot(self.train_losses_, label="Train Loss")
