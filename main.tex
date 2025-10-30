@@ -24,7 +24,7 @@ Cardiovascular diseases (CVDs) remain among the leading causes of death worldwid
 %-------------------------------------------------------
 \section{Introduction}
 \noindent
-Cardiovascular diseases (CVDs) continue to represent one of the most critical challenges in global public health, accounting for a significant proportion of preventable deaths each year. Among these, Myocardial Infarction and Coronary Heart Disease (MICHD) are particularly prevalent and often fatal if not detected early. Traditional diagnostic methods—based on medical imaging, laboratory testing, and clinical evaluation—are effective yet resource-intensive and reactive rather than preventative.
+Cardiovascular diseases (CVDs) continue to represent one of the most critical challenges in global public health, accounting for a significant proportion of preventable deaths each year. Among these, Myocardial Infarction and Coronary Heart Disease (MICHD) are particularly prevalent and often fatal if not detected early. Traditional diagnostic methods based on medical imaging, laboratory testing, and clinical evaluation are effective yet resource-intensive and reactive rather than preventative.
 
 The growing availability of large-scale health datasets, such as the Behavioral Risk Factor Surveillance System (BRFSS), offers an opportunity to develop data-driven predictive tools capable of identifying individuals at high risk before the onset of severe disease. However, these datasets present challenges related to heterogeneity, missing values, and class imbalance.
 
@@ -48,7 +48,7 @@ P(y = 1 \mid \bm{x}) = \frac{1}{1 + e^{-(\bm{w}^\top \bm{x} + b)}}
 
 Here, $\bm{w}$ denotes the learned weight vector, $\bm{x}$ the input feature vector, and $b$ the bias term.
 
-Model parameters were optimized using \textbf{mini-batch Stochastic Gradient Descent (SGD)} with 1000 iterations, a learning rate of 0.1, and a batch size of 10{,}000. This batch size was selected to mitigate class imbalance effects that may arise with smaller subsets. The optimization minimizes the \textbf{binary cross-entropy loss}, which quantifies the difference between predicted and true labels.
+Model parameters were optimized using \textbf{mini-batch Stochastic Gradient Descent (SGD)} with 1000 iterations, a learning rate of 0.1, and a batch size of 10,000. This batch size was selected to mitigate class imbalance effects that may arise with smaller subsets. The optimization minimizes the \textbf{negative log-likelihood loss}, which quantifies the difference between predicted and true labels.
 
 % ------------------------------------------------------
 \subsection{Regularization and Overfitting Prevention}
@@ -81,6 +81,16 @@ Training employed \textbf{early stopping}, a regularization method halting optim
 
 A \textbf{grid search} was conducted to tune hyperparameters such as learning rate, regularization strength, class weighting, and classification thresholds. The optimal decision threshold was selected using the \textbf{Receiver Operating Characteristic (ROC)} curve, balancing sensitivity and specificity.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{roc_curve.png}
+    \caption{ROC Curve}
+    \label{fig:placeholder}
+\end{figure}
+
+
+This ROC curve, fig.1, illustrates the trade-off between the True Positive Rate (TPR) and the False Positive Rate (FPR) for different decision thresholds of our classifier. The curve shows how well the model distinguishes between positive and negative classes. The red point marks the threshold (0.77) that yielded the best F1-score (0.394), representing the optimal balance between precision and recall. A higher area under the curve (AUC) indicates better overall classification performance.
+
 % ------------------------------------------------------
 \subsection{Dataset Description}
 The dataset originates from the \textbf{Behavioral Risk Factor Surveillance System (BRFSS)}, a large-scale survey capturing self-reported health data across multiple domains:
@@ -90,7 +100,30 @@ Data cleaning involved removing duplicates, dropping administrative variables (e
 
 % ------------------------------------------------------
 \section{Results}
-[To be completed once analysis results are available.]
+
+This bar, Fig.2, chart presents the relative importance of the features used in our predictive model. Features with higher importance values have a stronger influence on the model’s predictions. Age-related variables such as \textbf{AGE80} and \textbf{AGEG5YR} are the most significant predictors, indicating that age plays a major role in determining the risk of cardiovascular diseases. Other influential factors include \textbf{CHILDREN, TOLDHI2} (doctor-diagnosed high blood pressure), and \textbf{RFCHOL} (cholesterol status), reflecting both demographic and health-related contributions to disease prediction.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{feature_importance.png}
+    \caption{Features}
+    \label{fig:placeholder}
+\end{figure}
+
+This plot, fig.3, shows the evolution of the training and validation losses over the training iterations. The training loss remains relatively stable, while the validation loss decreases steadily, indicating that the model continues to improve its performance on unseen data. The consistent gap between the two curves suggests that the model generalizes reasonably well, with no clear signs of overfitting. Overall, the downward trend in validation loss demonstrates that the optimization process successfully minimized the negative log-likelihood and improved predictive accuracy.
+
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1\linewidth]{loss_plot.png}
+    \caption{Negative Log-Likelihood loss}
+    \label{fig:placeholder}
+\end{figure}
+
+
+
+
 
 % ------------------------------------------------------
 \section{Discussion}
