@@ -151,7 +151,7 @@ def expand_dataset_col(col_list, path, with_missing=True):
         expanded_col_names.extend(col_names)
     return np.hstack(expanded_cols), expanded_col_names
 
-def check_saved_extended_dataset(col_list, file_path):
+def check_saved_extended_dataset(col_list, file_path, with_missing=False):
     # Change file extensions to .npy
     npy_path = file_path.rsplit('.', 1)[0] + '.npy'
     col_path = file_path.rsplit('.', 1)[0] + '_columns.txt'
@@ -159,27 +159,31 @@ def check_saved_extended_dataset(col_list, file_path):
     if os.path.isfile(npy_path) and os.path.isfile(col_path):
         print("Extended dataset found.")
         with open(col_path, 'r') as f:
-            stripped_header = f.read().strip().split(',')
-        
+            stripped_header = f.readline().strip().split(',')
+          
+            extended_col_names = f.readline().strip().split(',')
+            
         if len(stripped_header) == len(col_list):
             print("Extended dataset has the correct number of columns.")
             x_train_expanded = np.load(npy_path)
-            return x_train_expanded, stripped_header
+            return x_train_expanded, extended_col_names
         else:
             difference = set(col_list).symmetric_difference(set(stripped_header))
             print("Column mismatch. Difference:", difference)
             raise ValueError(f"Expected {len(col_list)} columns, got {len(stripped_header)}")
     else:
         print("Extended dataset not found. Generating...")
-        x_train_expanded, expanded_col_names = expand_dataset_col(col_list, '../data/dataset/x_train.csv', False)
+        x_train_expanded, expanded_col_names = expand_dataset_col(col_list, '../data/dataset/x_train.csv', with_missing)
         
-        # Save as binary .npy (10-100x smaller than CSV)
+        
         np.save(npy_path, x_train_expanded)
         print(f"Extended dataset saved to {npy_path}")
         
         # Save column names as text
         with open(col_path, 'w') as f:
             f.write(','.join(col_list))
+            f.write('\n')
+            f.write(','.join(expanded_col_names))
         print(f"Column names saved to {col_path}")
         
         return x_train_expanded, expanded_col_names
@@ -292,13 +296,13 @@ def plot_feature_importance(model, expanded_col_names,nr_features=20):
     plt.figure(figsize=(10, 6))
     plt.bar(range(len(sorted_indices)), feature_importance[sorted_indices], align="center")
     plt.xticks(range(len(sorted_indices)), feature_names[sorted_indices], rotation=90)
-    plt.title("Feature Importance (Sklearn Logistic Regression)")
+    plt.title("Feature Importance")
     plt.xlabel("Features")
     plt.ylabel("Importance")
     plt.tight_layout()
     return plt
 
-def save_report(model, plot_loss, plot_roc, evaluation, plot_feature, values):
+def save_report(model, evaluation, values,path='./reports/'):
     """
     Saves the shape of the datasets x_train, y_train, x_val, y_val,
     saves the roc curve report,
@@ -315,18 +319,14 @@ def save_report(model, plot_loss, plot_roc, evaluation, plot_feature, values):
         None but saves the report to a text file with timestamp
     """
     #file name is report+timestamp+.txt
-    path = "./reports/"
     timestamp = path + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
     filename =  timestamp + '_report.txt'
     with open(filename, 'w') as f:
         #save loss plot
-        plot_loss.savefig(str(timestamp) +'_loss_plot.png', bbox_inches='tight')
         f.write("Loss plot saved as " + str(timestamp) +'_loss_plot.png\n')
 
-        plot_feature.savefig(str(timestamp) +'_feature_importance.png', bbox_inches='tight')
         f.write("Feature importance plot saved as " + str(timestamp) +'_feature_importance.png\n')
 
-        plot_roc.savefig(str(timestamp) +'_roc_curve.png', bbox_inches='tight')
         f.write("ROC curve plot saved as " + str(timestamp) +'_roc_curve.png\n')
 
         f.write("Model parameters:\n")
@@ -517,7 +517,6 @@ class LogisticRegression_costum:
 
         if self.verbose:
             plt_loss = self._plot_loss()
-            plt_loss.show()
             return plt_loss
 
     def predict_proba(self, X):
@@ -531,7 +530,7 @@ class LogisticRegression_costum:
 
     def evaluate(self, X, y, threshold=0.5, digits=3):
         y_pred = self.predict(X, threshold)
-        return (self.classification_report(y, y_pred, digits=digits))
+        return (self.classification_report(y, y_pred, digits))
     
     def roc_curve(self, X, y, plot=False):
         '''
@@ -591,8 +590,7 @@ class LogisticRegression_costum:
         else:
             return best_f1, best_thresh
 
-    def classification_report(y_true, y_pred, digits=3):
-        """NumPy-only version of sklearn.metrics.classification_report."""
+    def classification_report(self, y_true, y_pred, digits=3):
         classes = np.unique(np.concatenate((y_true, y_pred)))
         report = []
         total = len(y_true)
@@ -624,4 +622,3 @@ class LogisticRegression_costum:
         report.append("\nMacro avg:   precision={:.{d}f}, recall={:.{d}f}, f1={:.{d}f}".format(*macro_avg, d=digits))
         report.append("Weighted avg: precision={:.{d}f}, recall={:.{d}f}, f1={:.{d}f}".format(*weighted_avg, d=digits))
         return "\n".join(report)
-
