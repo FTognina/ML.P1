@@ -409,18 +409,14 @@ class LogisticRegression_costum:
 
     def _loss(self, X, y, sample_weight=None):
         m = X.shape[0]
-        y_pred = self._sigmoid(X @ self.weights_)
-        eps = 1e-15
-        y_pred = np.clip(y_pred, eps, 1 - eps)
-
+        z = X @ self.weights_
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=float)
 
-        loss = -np.average(
-            y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred),
-            weights=sample_weight
-        )
+        # Logistic loss for labels in {-1, 1}
+        loss = np.average(np.log(1 + np.exp(-y * z)), weights=sample_weight)
 
+        # Regularization terms
         if self.penalty == "l2":
             loss += self.alpha * np.sum(self.weights_[1:] ** 2) / (2 * m)
         elif self.penalty == "l1":
@@ -431,14 +427,18 @@ class LogisticRegression_costum:
             loss += self.alpha * (l1 + l2) / m
         return loss
 
+
     def _gradient(self, X, y, sample_weight=None):
         m = X.shape[0]
-        y_pred = self._sigmoid(X @ self.weights_)
+        z = X @ self.weights_
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=float)
-        error = (y_pred - y) * sample_weight
+
+        # Error term for logistic loss with labels {-1, 1}
+        error = -y * self._sigmoid(-y * z) * sample_weight
         grad = X.T @ error / np.sum(sample_weight)
 
+        # Regularization terms
         if self.penalty in ("l2", "elasticnet"):
             l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) * np.r_[[0], self.weights_[1:]] / m
             grad += l2_term
@@ -447,6 +447,7 @@ class LogisticRegression_costum:
             l1_term[0] = 0
             grad += l1_term
         return grad
+
 
     def _plot_loss(self):
         plt.figure(figsize=(7, 5))
