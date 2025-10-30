@@ -1,5 +1,10 @@
 import numpy as np
+<<<<<<< HEAD
+from helper import * #import helper functions
+import list as lt
+=======
 from helper import *
+>>>>>>> f4ad8620afd9f5596f9a6c4a754f6ac0326670f4
 import os
 import matplotlib.pyplot as plt
 
@@ -15,7 +20,6 @@ header = load_header('../data/dataset/x_test.csv')
 col_list = [col for col in header[11:] if col != '_MICHD']
 
 x_train_expanded, expanded_col_names = check_saved_extended_dataset(col_list, '../data/dataset/x_train_expanded.csv' )
-
 
 
 x_train_full = x_train_expanded

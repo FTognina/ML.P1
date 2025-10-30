@@ -2,8 +2,8 @@ import sklearn
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 import numpy as np
-from helper import *#import helper functions
-import list as lt
+from project_script.helper import *#import helper functions
+import project_script.list as lt
 
 header = load_header('../data/dataset/x_test.csv')
 
@@ -34,7 +34,7 @@ param_grid = {
     'C': [0.5], #[0.1, 1, 10],
     'kernel': ['poly'],#['linear', 'rbf', 'poly'],
     'gamma': ['auto'], #['scale', 'auto'],
-    'class_weight': [None], #[None, 'balanced'],
+    'class_weight': ['balanced'], #[None, 'balanced'],
     'degree': [2,3] #[2, 3, 4]
 }
 grid_search = GridSearchCV(clf, param_grid, cv=5)
