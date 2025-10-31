@@ -5,7 +5,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
+"""Setting up a seed for reproducibility."""
 np.random.seed(1)
+
+"""Utility functions for data loading, preprocessing, model training, evaluation, and reporting."""
 
 def load_data_col(path, cols=(0), has_header=True):
     """Load numeric CSV with missing values -> np.nan using only numpy.
@@ -312,6 +315,15 @@ def fill_missing_column(header_train, header_test, dataset_test):
     return aligned
 
 def plot_feature_importance(model, expanded_col_names,nr_features=20):
+    """
+    Plots the feature importance based on the model's weights.
+    Args:
+        model: trained model
+        expanded_col_names: list of expanded column names
+        nr_features: number of top and bottom features to display
+    Returns:
+        plt: matplotlib plot object
+    """
     feature_importance = (model.weights_[1:])  # Exclude intercept
     feature_names = np.asarray(expanded_col_names)
     sorted_indices = np.concatenate([np.argsort(feature_importance)[::-1][:nr_features], np.argsort(feature_importance)[::-1][-nr_features:]])
@@ -341,16 +353,14 @@ def save_report(model, evaluation, values,path='./reports/'):
     Returns:
         None but saves the report to a text file with timestamp
     """
-    #file name is report+timestamp+.txt
-    timestamp = path + str(datetime.now().strftime("%Y%m%d_%H%M%S"))
-    filename =  timestamp + '_report.txt'
+    filename = 'report.txt'
     with open(filename, 'w') as f:
         #save loss plot
-        f.write("Loss plot saved as " + str(timestamp) +'_loss_plot.png\n')
+        f.write("Loss plot saved as loss_plot.png\n")
 
-        f.write("Feature importance plot saved as " + str(timestamp) +'_feature_importance.png\n')
+        f.write("Feature importance plot saved as feature_importance.png\n")
 
-        f.write("ROC curve plot saved as " + str(timestamp) +'_roc_curve.png\n')
+        f.write("ROC curve plot saved as roc_curve.png\n")
 
         f.write("Model parameters:\n")
         for param, value in model.__dict__.items():
@@ -360,7 +370,7 @@ def save_report(model, evaluation, values,path='./reports/'):
         f.write(evaluation + '\n')
         original_stdout = sys.stdout
 
-    with open(timestamp + "_output_log" + ".txt", 'w') as f:
+    with open("output_log.txt", 'w') as f:
         sys.stdout = f
         # Repeat all the print statements here
         print("x_train shape:", values["x_train"].shape," y_train shape:", values["y_train"].shape)
@@ -369,8 +379,26 @@ def save_report(model, evaluation, values,path='./reports/'):
         print("Predicted probabilities from our model:", values["y_pred_probabilities"].flatten()[:100])
         sys.stdout = original_stdout
 
-
-class LogisticRegression_costum:
+class LogisticRegression_custom:
+    """
+    Custom implementation of Logistic Regression as a class for easier use.
+        Args:
+            lr: Learning rate for gradient descent.
+            max_iter: Maximum number of iterations for training.
+            penalty: Regularization type ('l1', 'l2', 'elasticnet', or None).
+            alpha: Regularization strength.
+            l1_ratio: Ratio for elastic net regularization.
+            method: Optimization method ('batch' or 'full').
+            batch_size: Size of mini-batches for batch gradient descent.
+            fit_intercept: Whether to include an intercept term.
+            verbose: Whether to print training progress.
+            early_stopping: Whether to use early stopping based on validation loss.
+            patience: Number of iterations to wait for improvement before stopping.
+            tol: Tolerance for improvement to consider as an actual improvement.
+            bias_init: Initial value for the bias term.
+            class_weight: Class weights for handling imbalanced datasets.
+            plot_path: Path to save the loss plot.  
+    """
     def __init__(
         self,
         lr=0.01,
@@ -411,19 +439,36 @@ class LogisticRegression_costum:
         self.val_losses_ = []
 
     def _add_intercept(self, X):
+        """
+        Add an intercept column to the features dataset, this helps in calculating the bias term.
+        Args:
+            X: Features dataset.
+        Returns:
+            Features dataset with intercept column added.
+        """
         if not self.fit_intercept:
             return X
         return np.hstack((np.ones((X.shape[0], 1)), X))
-
-    # def _sigmoid(self, z):
-    #     return 1 / (1 + np.exp(-z))
     
     def _sigmoid(self, z):
+        """
+        Calculate the sigmoid function and clip the input to avoid overflow.
+        Args:
+            z: Input array.
+        Returns:
+            Sigmoid of the input array.
+        """
         z = np.clip(z, -500, 500)
         return 1 / (1 + np.exp(-z))
 
-
     def _compute_class_weights(self, y):
+        """
+        Compute sample weights based on class weights.
+        Args:
+            y: Labels dataset.
+        Returns:
+            sample_weights: Computed sample weights.
+        """
         if self.class_weight is None:
             return np.ones_like(y, dtype=float)
         if self.class_weight == "balanced":
@@ -436,6 +481,15 @@ class LogisticRegression_costum:
         raise ValueError("Invalid class_weight parameter")
 
     def _loss(self, X, y, sample_weight=None):
+        """
+        Compute the logistic loss function.
+        Args:
+            X: Features dataset.
+            y: Labels dataset.
+            sample_weight: Sample weights for loss computation.
+        Returns:
+            loss: Computed loss value.
+        """
         m = X.shape[0]
         p = self._sigmoid(X @ self.weights_)
         p = np.clip(p, 1e-15, 1 - 1e-15)
@@ -447,7 +501,7 @@ class LogisticRegression_costum:
         loss = -np.average(y01*np.log(p) + (1 - y01)*np.log(1 - p),
                         weights=sample_weight)
 
-        # Regularization terms
+        # Regularization terms, to be implemented
         if self.penalty == "l2":
             loss += self.alpha * np.sum(self.weights_[1:] ** 2) / (2 * m)
         elif self.penalty == "l1":
@@ -460,6 +514,15 @@ class LogisticRegression_costum:
 
 
     def _gradient(self, X, y, sample_weight=None):
+        """
+        Compute the gradient of the loss function.
+        Args:
+            X: Features dataset.
+            y: Labels dataset.
+            sample_weight: Sample weights for loss computation.
+        Returns:
+            grad: Gradient of the loss function.
+        """
         m = X.shape[0]
         p = self._sigmoid(X @ self.weights_)
         y01 = (y == 1).astype(np.float32)
@@ -483,6 +546,13 @@ class LogisticRegression_costum:
         return grad
 
     def _plot_loss(self):
+        """
+        Plot training and validation loss over iterations.
+        Args:
+            self: LogisticRegression_costum instance
+        Returns:
+            plt: matplotlib plot object
+        """
         plt.figure(figsize=(7, 5))
         plt.plot(self.train_losses_, label="Train Loss")
         if self.val_losses_:
@@ -498,6 +568,16 @@ class LogisticRegression_costum:
            return plt
 
     def fit(self, X, y, X_val=None, y_val=None):
+        """
+        Fit the logistic regression model to the training data.
+        Args:
+            X: Features dataset.
+            y: Labels dataset.
+            X_val: Validation features dataset.
+            y_val: Validation labels dataset.
+        Returns:
+            plt_loss: Loss plot if verbose is True.
+        """
         X = X.astype(np.float32)
         y = y.astype(np.float32)
         X = self._add_intercept(X)
@@ -554,15 +634,40 @@ class LogisticRegression_costum:
             return plt_loss
 
     def predict_proba(self, X):
+        """
+        Predict probability estimates for samples in X.
+        Args:
+            X: Features dataset.
+        Returns:
+            probabilities: Predicted probabilities for each class.
+        """
         X = self._add_intercept(X)
         return self._sigmoid(X @ self.weights_)
 
     def predict(self, X, threshold=0.5):
+        """
+        Predict class labels for samples in X.
+        Args:
+            X: Features dataset.
+            threshold: Decision threshold for classification.
+        Returns:
+            predictions: Predicted class labels (-1 or 1).
+        """
         temp = (self.predict_proba(X) >= threshold)
         temp = (temp.astype(np.int8) * 2) - 1
         return temp
 
     def evaluate(self, X, y, threshold=0.5, digits=3):
+        """
+        Generate a classification report.
+        Args:
+            X: Features dataset.
+            y: True labels.
+            threshold: Decision threshold for classification.
+            digits: Number of digits for formatting output.
+        Returns:
+            report: String representation of the classification report.
+        """
         y_pred = self.predict(X, threshold)
         return (self.classification_report(y, y_pred, digits))
     
@@ -570,9 +675,13 @@ class LogisticRegression_costum:
         '''
         Plot ROC curve, implemented using only NumPy and Matplotlib.
         shows the best f1 score on the curve
-        X: numpy array of shape (N, D)
-        y: numpy array of shape (N, 1)
-        Returns: best_f1, best_thresh
+        Args:
+            X: numpy array of shape (N, D)
+            y: numpy array of shape (N, 1)
+        Returns:    
+            best_f1: best F1 score
+            best_thresh: best threshold
+            plt: matplotlib plot object (if plot=True)
         '''
     
         y_scores = self.predict_proba(X)
@@ -625,6 +734,15 @@ class LogisticRegression_costum:
             return best_f1, best_thresh
 
     def classification_report(self, y_true, y_pred, digits=3):
+        """
+        Generate a classification report.
+        Args:
+            y_true: Ground truth (correct) target values.
+            y_pred: Estimated targets as returned by a classifier.
+            digits: Number of digits for formatting output.
+        Returns:
+            report: String representation of the classification report.
+        """
         classes = np.unique(np.concatenate((y_true, y_pred)))
         report = []
         total = len(y_true)
@@ -657,7 +775,7 @@ class LogisticRegression_costum:
         report.append("Weighted avg: precision={:.{d}f}, recall={:.{d}f}, f1={:.{d}f}".format(*weighted_avg, d=digits))
         return "\n".join(report)
 
-import os
+"""Main script to run the logistic regression model with specified parameters."""
 
 os.environ["OPENBLAS_NUM_THREADS"] = "8"
 print("OPENBLAS_NUM_THREADS =", os.environ.get("OPENBLAS_NUM_THREADS"))
@@ -670,72 +788,70 @@ header = load_header('./data/dataset/x_test.csv')
 
 col_list = [col for col in header[11:] if col != '_MICHD']
 
-def run(class_weight,penalty, with_missing, nr_run=0):
-    path = './reports/run_' + str(nr_run)+'_'
-    if with_missing:
-        x_train_expanded, expanded_col_names = expand_dataset_col(col_list, './data/dataset/x_train.csv', with_missing)
-    else:
-        x_train_expanded, expanded_col_names = check_saved_extended_dataset(col_list, './data/dataset/x_train_expanded.csv')
-    x_train_full = x_train_expanded
-    y_train_full = load_data_col('./data/dataset/y_train.csv', cols=(1))
 
-    x_train,y_train,x_val,y_val = split_data_train_test_80(x_train_full, y_train_full, seed=1)
+path = './reports/run_' + str(nr_run)+'_'
+if with_missing:
+    x_train_expanded, expanded_col_names = expand_dataset_col(col_list, './data/dataset/x_train.csv', with_missing)
+else:
+    x_train_expanded, expanded_col_names = check_saved_extended_dataset(col_list, './data/dataset/x_train_expanded.csv')
+x_train_full = x_train_expanded
+y_train_full = load_data_col('./data/dataset/y_train.csv', cols=(1))
 
-    model = LogisticRegression_costum(
-        lr=0.1,
-        max_iter=1000,
-        penalty=penalty,
-        alpha=0.1,
-        class_weight={-1: 1.0, 1: class_weight},
-        bias_init=0.5,
-        verbose=True,
-        early_stopping=True,
-        patience=20,
-    )
-    print("x_train shape:", x_train.shape," y_train shape:", y_train.shape)
-    print("x_val shape:", x_val.shape," y_val shape:", y_val.shape)
+x_train,y_train,x_val,y_val = split_data_train_test_80(x_train_full, y_train_full, seed=1)
 
-    plot_loss = model.fit(x_train, y_train, x_val, y_val)
-    plot_loss.savefig(str(path) +'loss_plot.png', bbox_inches='tight')
+model = LogisticRegression_custom(
+    lr=0.1,
+    max_iter=1000,
+    penalty=penalty,
+    alpha=0.1,
+    class_weight={-1: 1.0, 1: class_weight},
+    bias_init=0.5,
+    verbose=True,
+    early_stopping=True,
+    patience=20,
+)
+print("x_train shape:", x_train.shape," y_train shape:", y_train.shape)
+print("x_val shape:", x_val.shape," y_val shape:", y_val.shape)
 
-    best_f1, threshold, plot_roc = model.roc_curve(x_val, y_val, plot=True)
-    plot_roc.savefig(str(path) +'roc_curve.png', bbox_inches='tight')
-    try:
-        evaluation = model.evaluate(x_val, y_val, threshold)
-        print(evaluation)
-    except Exception as e:
-        print("Error during evaluation:", e)
-        evaluation = "Evaluation failed."
-    
-    #shows feature importance of the logistic regression model
-    plot_feature = plot_feature_importance(model, expanded_col_names, nr_features=20)
-    plot_feature.savefig(str(path) +'feature_importance.png', bbox_inches='tight')
-    #Create a csv submission file with the predictions on the test set
+plot_loss = model.fit(x_train, y_train, x_val, y_val)
+plot_loss.savefig(str(path) +'loss_plot.png', bbox_inches='tight')
 
-    #x_test_sub = load_data_col('../data/dataset/x_test.csv', cols=col_index)
-    x_test_extended, header_test_expanded = expand_dataset_col(col_list, './data/dataset/x_test.csv' )
-    x_test_extended = fill_missing_column(expanded_col_names, header_test_expanded, x_test_extended)
-    y_pred_probabilities = model.predict_proba(X=x_test_extended)
+best_f1, threshold, plot_roc = model.roc_curve(x_val, y_val, plot=True)
+plot_roc.savefig(str(path) +'roc_curve.png', bbox_inches='tight')
+try:
+    evaluation = model.evaluate(x_val, y_val, threshold)
+    print(evaluation)
+except Exception as e:
+    print("Error during evaluation:", e)
+    evaluation = "Evaluation failed."
 
-    y_pred = model.predict(X=x_test_extended, threshold=threshold)
+#shows feature importance of the logistic regression model
+plot_feature = plot_feature_importance(model, expanded_col_names, nr_features=20)
+plot_feature.savefig(str(path) +'feature_importance.png', bbox_inches='tight')
+#Create a csv submission file with the predictions on the test set
+
+#x_test_sub = load_data_col('../data/dataset/x_test.csv', cols=col_index)
+x_test_extended, header_test_expanded = expand_dataset_col(col_list, './data/dataset/x_test.csv' )
+x_test_extended = fill_missing_column(expanded_col_names, header_test_expanded, x_test_extended)
+y_pred_probabilities = model.predict_proba(X=x_test_extended)
+
+y_pred = model.predict(X=x_test_extended, threshold=threshold)
 
 
-    ids = load_data_col('./data/dataset/x_test.csv', cols=(0,), has_header=True).astype(int)
+ids = load_data_col('./data/dataset/x_test.csv', cols=(0,), has_header=True).astype(int)
 
-    create_csv_submission(ids, y_pred, str(path)+"submission.csv")
-    #pack the x,y,ypred values
-    values = {
-        "x_train": x_train,
-        "y_train": y_train,
-        "x_val": x_val,
-        "y_val": y_val,
-        "y_pred_probabilities": y_pred_probabilities
-    }
-    save_report(model, evaluation, values, path)
-    #calculate accuracy
-    y_val_pred = model.predict(X=x_val, threshold=threshold)
-    acuracy = np.mean(y_val_pred == y_val)
-    return best_f1, acuracy
+create_csv_submission(ids, y_pred, str(path)+"submission.csv")
+#pack the x,y,ypred values
+values = {
+    "x_train": x_train,
+    "y_train": y_train,
+    "x_val": x_val,
+    "y_val": y_val,
+    "y_pred_probabilities": y_pred_probabilities
+}
+save_report(model, evaluation, values, path)
+#calculate accuracy
+y_val_pred = model.predict(X=x_val, threshold=threshold)
+accuracy = np.mean(y_val_pred == y_val)
 
-f1, acuracy = run(class_weight=10, penalty="l2", with_missing=False)
-print('F1 score:', f1, 'Accuracy:', acuracy)
+print('F1 score:', best_f1, 'Accuracy:', accuracy)
