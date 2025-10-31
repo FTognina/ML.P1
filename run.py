@@ -9,19 +9,20 @@ np.random.seed(1)
 
 def load_data_col(path, cols=(0), has_header=True):
     """Load numeric CSV with missing values -> np.nan using only numpy.
-    path: path to CSV file
-    cols: list of column indices to load (default: 0)
-    has_header: whether the CSV file has a header row (default: True)
-
-    returns data with nan for missing values
+    Args:
+        path: path to CSV file
+        cols: list of column indices to load (default: 0)
+        has_header: whether the CSV file has a header row (default: True)
+    Returns: 
+        data: data with nan for missing values
     """
     skip = 1 if has_header else 0
     data = np.genfromtxt(
         path,
         delimiter=",",
         skip_header=1 if has_header else 0,
-        usecols=(cols),  # adjust based on relevant columns]       # force float to accommodate np.nan
-        missing_values=["", "NA", "NaN"],       # treat empty strings as missing missing_values=["", "NA", "NaN"]
+        usecols=(cols),
+        missing_values=["", "NA", "NaN"],
         filling_values=np.nan,
         autostrip=True,
         invalid_raise=False
@@ -30,8 +31,10 @@ def load_data_col(path, cols=(0), has_header=True):
 
 def load_header(path):
     """Load column names from CSV header.
-    path: path to CSV file
-    return: list of column names in the header
+    Args:
+        path: path to CSV file
+    Returns:
+        list of column names in the header
     """
     with open(path, 'r') as f:
         header = f.readline().strip()
@@ -39,8 +42,11 @@ def load_header(path):
 
 def get_col_index(cols, header):
     """Get the index of a column given its name from a list of column names.
-    cols: list of column names to find
-    header: list of all column names
+    Args:
+        cols: list of column names to find
+        header: list of all column names    
+    Returns:
+        list of column names found and their indices in the header
     """
     for name in cols:
         if name not in header:
@@ -53,11 +59,15 @@ def expand_column(col, col_name, with_missing=True):
     Each column in the output array is a binary indicator (0 or 1) of whether the corresponding
     entry in col matches the unique value for that column.
     if the number of unique values is greater than 10, the column is standardized instead.
-    col: 1D numpy array of categorical values
-    col_name: name of the column
-    with_missing: whether to handle missing values
-    #Missing values are handled by adding an additional binary indicator for nans column and setting them to 0.
-    return: expanded 2D numpy array and list of new column names
+    Nans are either ignored or added as a separate indicator column based on with_missing flag.
+    Args:
+        col: 1D numpy array of categorical values
+        col_name: name of the column
+        with_missing: whether to handle missing values
+
+    Returns:
+        expanded: expanded 2D numpy array
+        col_names: list of new column names
     '''
 
     is_missing = np.isnan(col).astype(np.int8)
@@ -99,8 +109,11 @@ def match_col_names(partial_names, header):
     Match partial column names with full column names from the header.
     partial_names: list of partial column names to match.
     Needed to match the columns present in the training set with the ones in the test set.
-    header: list of all column names
-    return: list of matched full column names
+    Args:
+        header: list of all column names
+        return: list of matched full column names
+    Returns:
+        matched_names: list of matched full column names
     """
     matched_names = []
     for pname in partial_names:
@@ -118,12 +131,16 @@ def match_col_names(partial_names, header):
 
 def expand_dataset_col(col_list, path, with_missing=True):
     '''
-    Expand a dataset by selecting specific columns and expanding categorical columns into binary indicators.
-    col_list: list of column names to select and expand
-    header: list of all column names in the dataset
-    dataset: numpy array of the dataset to expand or path to the dataset
-    with_missing: whether to handle missing values
-    return: expanded dataset as a numpy array and list of new column names
+    Expand a dataset by selecting specific columns and expanding categorical 
+    columns into binary indicators or standardizing numerical columns.
+    Args:
+        col_list: list of column names to select and expand
+        header: list of all column names in the dataset
+        dataset: numpy array of the dataset to expand or path to the dataset
+        with_missing: whether to handle missing values
+    Returns:
+        expanded_cols: expanded dataset as a numpy array
+        expanded_col_names: list of new column names
     '''
     path_dataset = path
     header = load_header(path_dataset)
@@ -147,7 +164,18 @@ def expand_dataset_col(col_list, path, with_missing=True):
     return np.hstack(expanded_cols), expanded_col_names
 
 def check_saved_extended_dataset(col_list, file_path, with_missing=False):
-    # Change file extensions to .npy
+    """
+    Check if an extended dataset is already saved as a .npy file.
+
+    Args:
+        col_list: list of column names to check
+        file_path: path to the original dataset file
+        with_missing: whether to include missing values in the check
+
+    Returns:
+        x_train_expanded: expanded dataset as a numpy array
+        expanded_col_names: list of expanded column names
+    """
     npy_path = file_path.rsplit('.', 1)[0] + '.npy'
     col_path = file_path.rsplit('.', 1)[0] + '_columns.txt'
     
@@ -407,30 +435,6 @@ class LogisticRegression_costum:
             return np.array([self.class_weight.get(val, 1.0) for val in y])
         raise ValueError("Invalid class_weight parameter")
 
-    # def _loss(self, X, y, sample_weight=None):
-    #     m = X.shape[0]
-    #     y_pred = self._sigmoid(X @ self.weights_)
-    #     eps = 1e-15
-    #     y_pred = np.clip(y_pred, eps, 1 - eps)
-
-    #     if sample_weight is None:
-    #         sample_weight = np.ones_like(y, dtype=float)
-
-    #     loss = -np.average(
-    #         y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred),
-    #         weights=sample_weight
-    #     )
-
-    #     if self.penalty == "l2":
-    #         loss += self.alpha * np.sum(self.weights_[1:] ** 2) / (2 * m)
-    #     elif self.penalty == "l1":
-    #         loss += self.alpha * np.sum(np.abs(self.weights_[1:])) / m
-    #     elif self.penalty == "elasticnet":
-    #         l1 = self.l1_ratio * np.sum(np.abs(self.weights_[1:]))
-    #         l2 = (1 - self.l1_ratio) * np.sum(self.weights_[1:] ** 2) / 2
-    #         loss += self.alpha * (l1 + l2) / m
-    #     return loss
-
     def _loss(self, X, y, sample_weight=None):
         m = X.shape[0]
         p = self._sigmoid(X @ self.weights_)
@@ -477,24 +481,6 @@ class LogisticRegression_costum:
             l1_term[0] = 0
             grad += l1_term
         return grad
-
-
-    # def _gradient(self, X, y, sample_weight=None):
-    #     m = X.shape[0]
-    #     y_pred = self._sigmoid(X @ self.weights_)
-    #     if sample_weight is None:
-    #         sample_weight = np.ones_like(y, dtype=float)
-    #     error = (y_pred - y) * sample_weight
-    #     grad = X.T @ error / np.sum(sample_weight)
-
-    #     if self.penalty in ("l2", "elasticnet"):
-    #         l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) * np.r_[[0], self.weights_[1:]] / m
-    #         grad += l2_term
-    #     if self.penalty in ("l1", "elasticnet"):
-    #         l1_term = self.alpha * (self.l1_ratio if self.penalty == "elasticnet" else 1) * np.sign(self.weights_) / m
-    #         l1_term[0] = 0
-    #         grad += l1_term
-    #     return grad
 
     def _plot_loss(self):
         plt.figure(figsize=(7, 5))
@@ -750,8 +736,6 @@ def run(class_weight,penalty, with_missing, nr_run=0):
     y_val_pred = model.predict(X=x_val, threshold=threshold)
     acuracy = np.mean(y_val_pred == y_val)
     return best_f1, acuracy
-
-#do a grid search only over class_weights [1.0,5.0,10.0,20.0,30.0,40.0,50.0], then plot f1 score and accuracy vs class weight
 
 f1, acuracy = run(class_weight=10, penalty="l2", with_missing=False)
 print('F1 score:', f1, 'Accuracy:', acuracy)
