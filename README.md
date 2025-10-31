@@ -28,7 +28,7 @@ ML.P1/
 ├── project_script/ 
 │   ├── reports_grid_loing/ # Resulting plots
 │   ├── helper.py
-│   └── evaluate.py                 
+│   └── grid_run.py                 
 ├── reports/             # Resulting plots
 ├── REPORT.pdf
 ├── implementations.py 
