@@ -21,14 +21,15 @@ By running this line, you will get the resulting plots in the folder reports/
 python run.py 
 ```
 
-## Project tructure
+## Project structure
 ```bash
 ML.P1/
 │
 ├── project_script/ 
 │   ├── reports_grid_loing/ # Resulting plots
 │   ├── helper.py
-│   └── grid_run.py                 
+│   ├── grid_run.py
+│   └── README.md                
 ├── reports/             # Resulting plots
 ├── REPORT.pdf
 ├── implementations.py 
