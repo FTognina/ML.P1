@@ -5,11 +5,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import os
 
-#todo
-#rng = np.random.default_rng()
-#sub and over sampling
-
-#add a seed for np
 np.random.seed(1)
 
 def load_data_col(path, cols=(0), has_header=True):
