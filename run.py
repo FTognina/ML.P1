@@ -60,7 +60,7 @@ def expand_column(col, col_name, with_missing=True):
     '''
     Expand a 1D column vector into a N array where N is the number of unique values in col.
     Each column in the output array is a binary indicator (0 or 1) of whether the corresponding
-    entry in col matches the unique value for that column.
+    entry in col matches the unique value for that column (our version of One-hot encoding).
     if the number of unique values is greater than 10, the column is standardized instead.
     Nans are either ignored or added as a separate indicator column based on with_missing flag.
     Args:
@@ -113,8 +113,8 @@ def match_col_names(partial_names, header):
     partial_names: list of partial column names to match.
     Needed to match the columns present in the training set with the ones in the test set.
     Args:
-        header: list of all column names
-        return: list of matched full column names
+        partial_names: list of partial column names
+        header: list of all column names in the dataset
     Returns:
         matched_names: list of matched full column names
     """
@@ -138,8 +138,7 @@ def expand_dataset_col(col_list, path, with_missing=True):
     columns into binary indicators or standardizing numerical columns.
     Args:
         col_list: list of column names to select and expand
-        header: list of all column names in the dataset
-        dataset: numpy array of the dataset to expand or path to the dataset
+        path: path to the dataset file
         with_missing: whether to handle missing values
     Returns:
         expanded_cols: expanded dataset as a numpy array
@@ -214,7 +213,6 @@ def check_saved_extended_dataset(col_list, file_path, with_missing=False):
         
         return x_train_expanded, expanded_col_names
 
-
 def build_k_indices(y, k_fold, seed):
     """module taken frome the lecture:
     
@@ -234,7 +232,6 @@ def build_k_indices(y, k_fold, seed):
     indices = np.random.permutation(num_row)
     k_indices = [indices[k * interval : (k + 1) * interval] for k in range(k_fold)]
     return np.array(object=k_indices, dtype=int)
-
 
 def split_data_train_test_80(x_full, y_full, seed=1):
     """split the dataset into training set and test set (80%-20%)
@@ -287,7 +284,6 @@ def create_csv_submission(ids, y_pred, name):
         for r1, r2 in zip(ids, y_pred):
             writer.writerow({"Id": int(r1), "Prediction": int(r2)})
 
-
 def fill_missing_column(header_train, header_test, dataset_test):
     '''
     the test dataset has columns that the train dataset don't have,
@@ -304,9 +300,7 @@ def fill_missing_column(header_train, header_test, dataset_test):
     n_rows = dataset_test.shape[0]
     n_cols_target = len(header_train)
 
-    # allocate result once with same dtype as dataset_test (zeros for missing cols)
     aligned = np.zeros((n_rows, n_cols_target), dtype=dataset_test.dtype)
-    # copy columns that exist in the test set into the right positions
     for j, col in enumerate(header_train):
         i = idx_map.get(col)
         if i is not None and i < dataset_test.shape[1]:
@@ -331,37 +325,28 @@ def plot_feature_importance(model, expanded_col_names,nr_features=20):
     plt.figure(figsize=(10, 6))
     plt.bar(range(len(sorted_indices)), feature_importance[sorted_indices], align="center")
     plt.xticks(range(len(sorted_indices)), feature_names[sorted_indices], rotation=90)
-    plt.title("Feature Importance")
+    plt.title("Feature weights")
     plt.xlabel("Features")
-    plt.ylabel("Importance")
+    plt.ylabel("Weights")
     plt.tight_layout()
     return plt
 
 def save_report(model, evaluation, values,path='./reports/'):
     """
-    Saves the shape of the datasets x_train, y_train, x_val, y_val,
-    saves the roc curve report,
-    saves the evaluate report,
-    saves the feature importance plot.
+    Saves the evaluation and the outputs of the code to a text file.
     Args:
         model: trained model
-        plot_loss: loss plot
-        plot_roc: roc curve plot
         evaluation: evaluation report
-        plot_feature: feature importance plot
         values: dictionary containing x_train, y_train, x_val, y_val, y_pred_probabilities
+        path: path to save the report
     Returns:
         None but saves the report to a text file with timestamp
     """
     filename = 'report.txt'
     with open(filename, 'w') as f:
-        #save loss plot
         f.write("Loss plot saved as loss_plot.png\n")
-
         f.write("Feature importance plot saved as feature_importance.png\n")
-
         f.write("ROC curve plot saved as roc_curve.png\n")
-
         f.write("Model parameters:\n")
         for param, value in model.__dict__.items():
             f.write(f"{param}: {value}\n")
@@ -396,7 +381,7 @@ class LogisticRegression_custom:
             patience: Number of iterations to wait for improvement before stopping.
             tol: Tolerance for improvement to consider as an actual improvement.
             bias_init: Initial value for the bias term.
-            class_weight: Class weights for handling imbalanced datasets.
+            class_weight: Class weights for handling imbalanced datasets, either 'balanced' or a dictionary.
             plot_path: Path to save the loss plot.  
     """
     def __init__(
@@ -406,7 +391,7 @@ class LogisticRegression_custom:
         penalty=None,
         alpha=0.0,
         l1_ratio=0.5,
-        method="",
+        method="full",
         batch_size=512,
         fit_intercept=True,
         verbose=False,
@@ -512,7 +497,6 @@ class LogisticRegression_custom:
             loss += self.alpha * (l1 + l2) / m
         return loss
 
-
     def _gradient(self, X, y, sample_weight=None):
         """
         Compute the gradient of the loss function.
@@ -533,7 +517,6 @@ class LogisticRegression_custom:
         err = (p - y01) * sample_weight
         grad = X.T @ err / np.sum(sample_weight)
 
-        # Regularization terms
         if self.penalty in ("l2", "elasticnet"):
             l2_term = self.alpha * (1 - (self.l1_ratio if self.penalty == "elasticnet" else 0)) \
                     * np.r_[[0], self.weights_[1:]] / m
@@ -548,8 +531,6 @@ class LogisticRegression_custom:
     def _plot_loss(self):
         """
         Plot training and validation loss over iterations.
-        Args:
-            self: LogisticRegression_costum instance
         Returns:
             plt: matplotlib plot object
         """
@@ -586,7 +567,7 @@ class LogisticRegression_custom:
         best_loss = np.inf
         no_improve_count = 0
         sample_weight = self._compute_class_weights(y)
-        # existing gradient-descent/Newton code below unchanged
+
         for i in range(self.max_iter):
             if self.method == "batch":
                 idxs = np.random.randint(0, X.shape[0], size=self.batch_size)
@@ -708,7 +689,6 @@ class LogisticRegression_custom:
             fpr.append(fpr_val)
             f1_scores.append(f1)
     
-        # Find best F1 score
         best_f1_idx = np.argmax(f1_scores)
         best_f1 = f1_scores[best_f1_idx]
         best_thresh = thresholds[best_f1_idx]
@@ -788,12 +768,7 @@ header = load_header('./data/dataset/x_test.csv')
 
 col_list = [col for col in header[11:] if col != '_MICHD']
 
-
-path = './reports/run_' + str(nr_run)+'_'
-if with_missing:
-    x_train_expanded, expanded_col_names = expand_dataset_col(col_list, './data/dataset/x_train.csv', with_missing)
-else:
-    x_train_expanded, expanded_col_names = check_saved_extended_dataset(col_list, './data/dataset/x_train_expanded.csv')
+x_train_expanded, expanded_col_names = check_saved_extended_dataset(col_list, './data/dataset/x_train_expanded.csv')
 x_train_full = x_train_expanded
 y_train_full = load_data_col('./data/dataset/y_train.csv', cols=(1))
 
@@ -802,9 +777,9 @@ x_train,y_train,x_val,y_val = split_data_train_test_80(x_train_full, y_train_ful
 model = LogisticRegression_custom(
     lr=0.1,
     max_iter=1000,
-    penalty=penalty,
+    penalty="l2",
     alpha=0.1,
-    class_weight={-1: 1.0, 1: class_weight},
+    class_weight={-1: 1.0, 1: 10.0},
     bias_init=0.5,
     verbose=True,
     early_stopping=True,
@@ -818,30 +793,23 @@ plot_loss.savefig(str(path) +'loss_plot.png', bbox_inches='tight')
 
 best_f1, threshold, plot_roc = model.roc_curve(x_val, y_val, plot=True)
 plot_roc.savefig(str(path) +'roc_curve.png', bbox_inches='tight')
-try:
-    evaluation = model.evaluate(x_val, y_val, threshold)
-    print(evaluation)
-except Exception as e:
-    print("Error during evaluation:", e)
-    evaluation = "Evaluation failed."
 
-#shows feature importance of the logistic regression model
-plot_feature = plot_feature_importance(model, expanded_col_names, nr_features=20)
+evaluation = model.evaluate(x_val, y_val, threshold)
+print(evaluation)
+
+plot_feature = plot_feature_importance(model, expanded_col_names, nr_features=10)
 plot_feature.savefig(str(path) +'feature_importance.png', bbox_inches='tight')
-#Create a csv submission file with the predictions on the test set
 
-#x_test_sub = load_data_col('../data/dataset/x_test.csv', cols=col_index)
 x_test_extended, header_test_expanded = expand_dataset_col(col_list, './data/dataset/x_test.csv' )
 x_test_extended = fill_missing_column(expanded_col_names, header_test_expanded, x_test_extended)
 y_pred_probabilities = model.predict_proba(X=x_test_extended)
 
 y_pred = model.predict(X=x_test_extended, threshold=threshold)
 
-
 ids = load_data_col('./data/dataset/x_test.csv', cols=(0,), has_header=True).astype(int)
 
 create_csv_submission(ids, y_pred, str(path)+"submission.csv")
-#pack the x,y,ypred values
+
 values = {
     "x_train": x_train,
     "y_train": y_train,
@@ -850,7 +818,7 @@ values = {
     "y_pred_probabilities": y_pred_probabilities
 }
 save_report(model, evaluation, values, path)
-#calculate accuracy
+
 y_val_pred = model.predict(X=x_val, threshold=threshold)
 accuracy = np.mean(y_val_pred == y_val)
 
