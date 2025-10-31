@@ -12,6 +12,29 @@ The dataset comes from the [CDC BRFSS 2021 survey](https://www.cdc.gov/brfss/). 
 ```bash
 git clone https://github.com/FTognina/ML.P1
 cd ML.P1
+```
+req: Python 3.14, NumPy 1.26, matplotlib 3.8
+
+## Usage
+By running this line, you will get the resulting plots in the folder reports/
+```bash
+python run.py 
+```
+
+## Project tructure
+```bash
+ML.P1/
+│
+├── project_script/ 
+│   ├── reports_grid_loing/ # Resulting plots
+│   ├── helper.py
+│   └── evaluate.py                 
+├── reports/             # Resulting plots
+├── REPORT.pdf
+├── implementations.py 
+├── run.py 
+└── README.md
+```
 
 
 
